@@ -3,9 +3,9 @@
 
 
 typedef struct _Matrix{
- int columns;
- int rows;
- double *array;
+	int columns;
+	int rows;
+	double *array;
 } Matrix;
 
 
@@ -17,7 +17,7 @@ Matrix *malloc_Matrix(int cols, int rows)
 	returnValue->array = (double*)malloc(sizeof(double)*cols*rows);
 	for(int i =0; i < cols*rows; i++)
 	{
-		returnValue->array[i] =0.0;
+		returnValue->array[i] = 0.0;
 	}
 	return returnValue;
 }
@@ -36,7 +36,7 @@ void print_Matrix(FILE *file, Matrix *matrix)
 		for(int c = 0; c < matrix->columns; c++)
 		{
 			int rindex = rcount + c;
-			fprintf(file,"%f\t",matrix->array[rindex]);
+			fprintf(file,"%f\t", matrix->array[rindex]);
 			fflush(file);
 		}
 		fprintf(file,"\r\n");
