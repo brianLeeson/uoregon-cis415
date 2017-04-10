@@ -1,0 +1,6 @@
+Name: Brian Leeson
+DuckID: 950999753
+HW: Project0
+This is my own work.
+
+Things you should know about this project:
