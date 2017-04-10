@@ -3,6 +3,9 @@
  *
  *  Created on: Apr 6, 2017
  *	  Author: brian
+ *	  DuckID: bel
+ *	  HW: Project0
+ *	  This is my own work
  */
 
 #include <string.h>
