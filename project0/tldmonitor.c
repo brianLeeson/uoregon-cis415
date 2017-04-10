@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
         goto error;
     }
     if (date_compare(begin, end) > 0) {
+    	printf("compare is wrong");
         fprintf(stderr, "%s > %s\n", argv[1], argv[2]);
         goto error;
     }
@@ -85,6 +86,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Unable to create iterator\n");
         goto error;
     }
+    puts("output below:");
     while ((n = tldlist_iter_next(it))) {
         printf("%6.2f %s\n", 100.0 * (double)tldnode_count(n)/total, tldnode_tldname(n));
     }

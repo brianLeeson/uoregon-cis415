@@ -5,10 +5,10 @@
  *	  Author: brian
  */
 
-#include "date.h"
 #include <string.h>
 #include <stdlib.h>
-
+#include <stdio.h>
+#include "date.h"
 
 struct date {
 	char yyyymmdd[11];
@@ -24,17 +24,23 @@ struct date {
 Date *date_create(char *datestr){
 	//malloc enough space for the date instance
 	Date *dateStruct = (Date *)malloc(sizeof(Date));
-
+	//printf("%s \n", datestr);
 	//NULL check. d is pointer to null if malloc fails
 	if (dateStruct != NULL) {
-		//copy the string in reverse order
-		int i, len = strlen(datestr);
-		char *end = datestr + len - 1;
-		for(i = 0; i<len ; end--, i++){
-			dateStruct->yyyymmdd[i] = *end;
-		}
-		dateStruct->yyyymmdd[i] = "\0";
+		char *delim = "/";
+		char *day = strtok(datestr, delim);
+		char *month = strtok(NULL, delim);
+		char *year = strtok(NULL, delim);
+		//printf("%s %s %s\n", year, month, day);
+
+		//dateStruct->yyyymmdd = "test";
+		strcat(dateStruct->yyyymmdd, year);
+		strcat(dateStruct->yyyymmdd, delim);
+		strcat(dateStruct->yyyymmdd, month);
+		strcat(dateStruct->yyyymmdd, delim);
+		strcat(dateStruct->yyyymmdd, day);
 	}
+	printf("dateSruct is %s\n\n", dateStruct->yyyymmdd);
 	return dateStruct;
 }
 
@@ -58,6 +64,8 @@ Date *date_duplicate(Date *d){
  * date1<date2, date1==date2, date1>date2, respectively
  */
 int date_compare(Date *date1, Date *date2){
+	//printf("%s\n", date1->yyyymmdd);
+	//printf("%s\n", date2->yyyymmdd);
 	return strcmp(date1->yyyymmdd, date2->yyyymmdd);
 }
 
@@ -66,6 +74,5 @@ int date_compare(Date *date1, Date *date2){
  */
 void date_destroy(Date *d){
 	free(d->yyyymmdd);
-	free(d);
 }
 
