@@ -8,13 +8,15 @@
  *	  This is my own work
  */
 
+#define DATE_LEN 20
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "date.h"
 
 struct date {
-	char yyyymmdd[11];
+	char yyyymmdd[DATE_LEN];
 };
 
 
@@ -67,8 +69,6 @@ Date *date_duplicate(Date *d){
  * date1<date2, date1==date2, date1>date2, respectively
  */
 int date_compare(Date *date1, Date *date2){
-	//printf("%s\n", date1->yyyymmdd);
-	//printf("%s\n", date2->yyyymmdd);
 	return strcmp(date1->yyyymmdd, date2->yyyymmdd);
 }
 
