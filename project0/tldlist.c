@@ -19,6 +19,8 @@ struct tldlist{
 	char *end[DATE_LEN];
 	struct tldnode *root;
 	int adds = 0;
+	int uniqueCount = 0;
+	//TLDIterator *iter;
 };
 
 struct tldnode{
@@ -29,7 +31,7 @@ struct tldnode{
 };
 
 struct tlditerator{
-
+	TLDNode **array;
 };
 
 /*
@@ -59,7 +61,7 @@ TLDList *tldlist_create(Date *begin, Date *end){
  * all heap allocated storage associated with the list is returned to the heap
  */
 void tldlist_destroy(TLDList *tld){
-
+	free(tld);
 }
 
 /*
@@ -98,13 +100,13 @@ TLDNode *avl_create_node() {
 
 int avl_insert( TLDList *tree, char *value ) {
 	//success returns 1, failure returns 0
-	TLDList *node = NULL;
-	TLDList *next = NULL;
-	TLDList *last = NULL;
+	TLDNode *node = NULL;
+	TLDNode *next = NULL;
+	TLDNode *last = NULL;
 
 	/* Well, there must be a first case */
 	if( tree->root == NULL ) {
-		TLDNode node = avl_create_node();
+		node = avl_create_node();
 		if (node == NULL){
 			return 0;
 		}
@@ -113,25 +115,25 @@ int avl_insert( TLDList *tree, char *value ) {
 
 	/* Okay.  We have a root already.  Where do we put this? */
 	} else {
-		TLDNode next = tree->root;
+		next = tree->root;
 
-		TLDNode last;
 		while(next != NULL) {
-			TLDNode last = next;
+			last = next;
 
-			if( value < next->value ) {
+			if (value < next->value) {
 				next = next->left;
 
 			} else if( value > next->value ) {
 				next = next->right;
 
-			/* Have we already inserted this node? */
+			//We already inserted this node
 			} else if( value == next->value ) {
 				next->count++;
+				return 1;
 			}
 		}
 
-		TLDNode node = avl_create_node();
+		node = avl_create_node();
 		if (node == NULL){
 			return 0;
 		}
@@ -139,9 +141,8 @@ int avl_insert( TLDList *tree, char *value ) {
 
 		if( value < last->value ) last->left = node;
 		if( value > last->value ) last->right = node;
-
 	}
-
+	tree->uniqueCount++;
 	avl_balance( tree );
 	return 1;
 }
@@ -267,6 +268,23 @@ void avl_balance( TLDList *tree ) {
 
 }
 
+/* Do a depth first traverse of a node. */
+void avl_traverse_node_dfs( TLDNode *node, int depth ) {
+	int i = 0;
+
+	if( node->left ) avl_traverse_node_dfs( node->left, depth + 2 );
+
+	for( i = 0; i < depth; i++ ) putchar( ' ' );
+	printf( "%d: %d\n", node->value, avl_balance_factor( node ) );
+
+	if( node->right ) avl_traverse_node_dfs( node->right, depth + 2 );
+}
+
+/* Do a depth first traverse of a tree. */
+void avl_traverse_dfs( TLDList *tree ) {
+	avl_traverse_node_dfs( tree->root, 0 );
+}
+
 /*
  * tldlist_count returns the number of successful tldlist_add() calls since
  * the creation of the TLDList
@@ -280,7 +298,15 @@ long tldlist_count(TLDList *tld){
  * to the iterator if successful, NULL if not
  */
 TLDIterator *tldlist_iter_create(TLDList *tld){
-
+	TLDIterator *iter = (TLDIterator *) malloc(sizeof(TLDIterator));
+	if (iter != NULL){
+		TLDNode **array = (TLDNode **) malloc((tld->uniqueCount) * sizeof(TLDNode *));
+		if(array != NULL){
+			//while still unique nodes, malloc space for one, put it in array
+			iter->array = array;
+		}
+	}
+	return iter;
 }
 
 /*
@@ -295,7 +321,7 @@ TLDNode *tldlist_iter_next(TLDIterator *iter){
  * tldlist_iter_destroy destroys the iterator specified by `iter'
  */
 void tldlist_iter_destroy(TLDIterator *iter){
-	//TODO is this right?
+	//TODO do more
 	free(iter);
 }
 
@@ -303,7 +329,7 @@ void tldlist_iter_destroy(TLDIterator *iter){
  * tldnode_tldname returns the tld associated with the TLDNode
  */
 char *tldnode_tldname(TLDNode *node){
-
+	return node->value;
 }
 
 /*
