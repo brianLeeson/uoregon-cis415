@@ -1,0 +1,9 @@
+Name: Brian Leeson
+DuckID: bel
+HW: Project0
+This is my own work except:
+ideas and code from: https://gist.github.com/tonious/1377768
+
+Things you should know about this project:
+State of the solution: compiles, links, runs on small and large text, passes tests.
+Notes on this submission: None
