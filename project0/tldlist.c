@@ -228,27 +228,19 @@ static int avl_insert( TLDList *tree, char *value ) {
 
 
 /* Do a depth first traverse of a node. */
-static void avl_traverse_node_dfs( TLDNode *node, TLDIterator *iter ) {
+static void taraverse_node_inorder( TLDNode *node, TLDIterator *iter ) {
 
-	if(node->left){
-		avl_traverse_node_dfs(node->left, iter);
+	if(node != NULL){
+		taraverse_node_inorder(node->left, iter);
+		iter->next = node;
+		iter->next++;
+		taraverse_node_inorder( node->right, iter);
 	}
-	iter->next = node;
-	iter->next++;
-
-
-	if( node->right){
-		avl_traverse_node_dfs( node->right, iter);
-	}
-
-
-
 }
 
 /* Do a depth first traverse of a tree. and populate the iter with all nodes */
-static void avl_traverse_dfs( TLDList *tree, TLDIterator *iter) {
-
-	avl_traverse_node_dfs( tree->root, iter );
+static void create_inorder_array( TLDList *tree, TLDIterator *iter) {
+	taraverse_node_inorder( tree->root, iter );
 }
 
 /*
@@ -328,7 +320,7 @@ TLDIterator *tldlist_iter_create(TLDList *tld){
 			iter->index = 0;
 
 			//traverse and populate
-			avl_traverse_dfs(tld, iter);
+			create_inorder_array(tld, iter);
 			iter->next = array[0];
 		}
 	}
