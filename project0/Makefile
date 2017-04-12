@@ -2,8 +2,8 @@ OBJECTS = date.o tldlist.o tldmonitor.o
 CFLAGS = -std=c99 -W -Wall -g
 CC = gcc
 PROG_NAME = tldmonitor
-SMALL = 01/08/1999 31/07/2009 small.txt
-LARGE = 01/08/1999 31/07/2009 large.txt
+SMALL = 01/01/2000 01/09/2013 small.txt
+LARGE = 01/01/2000 01/09/2013 large.txt
 
 tldmonitor: $(OBJECTS)
 	$(CC) $(OBJECTS) -o tldmonitor

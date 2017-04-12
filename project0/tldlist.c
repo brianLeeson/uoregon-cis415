@@ -176,8 +176,6 @@ static void avl_balance( TLDList *tree ) {
 }
 
 static int avl_insert( TLDList *tree, char *value ) {
-	//puts("inserting:");
-	//printf("%s\n", value);
 	//success returns 1, failure returns 0
 	TLDNode *node = NULL;
 	TLDNode *next = NULL;
@@ -222,8 +220,12 @@ static int avl_insert( TLDList *tree, char *value ) {
 		}
 		strcpy(node->value, value);
 
-		if( value < last->value ) last->left = node;
-		if( value > last->value ) last->right = node;
+		if(strcmp(value, last->value) < 0){
+			last->left = node;
+		}
+		if(strcmp(value, last->value) > 0){
+			last->right = node;
+		}
 	}
 	tree->uniqueCount++;
 	avl_balance( tree );
