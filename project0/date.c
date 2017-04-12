@@ -29,23 +29,20 @@ struct date {
 Date *date_create(char *datestr){
 	//malloc enough space for the date instance
 	Date *dateStruct = (Date *)malloc(sizeof(Date));
-	//printf("%s \n", datestr);
+
 	//NULL check. d is pointer to null if malloc fails
 	if (dateStruct != NULL) {
 		char *delim = "/";
 		char *day = strtok(datestr, delim);
 		char *month = strtok(NULL, delim);
 		char *year = strtok(NULL, delim);
-		//printf("%s %s %s\n", year, month, day);
 
 		strcat(dateStruct->yyyymmdd, year);
 		strcat(dateStruct->yyyymmdd, delim);
 		strcat(dateStruct->yyyymmdd, month);
 		strcat(dateStruct->yyyymmdd, delim);
 		strcat(dateStruct->yyyymmdd, day);
-		printf("yyyymmdd is %s\n", dateStruct->yyyymmdd);
 	}
-	//printf("dateSruct is %s\n\n", dateStruct->yyyymmdd);
 	return dateStruct;
 }
 
@@ -57,6 +54,7 @@ Date *date_create(char *datestr){
 Date *date_duplicate(Date *d){
 	//malloc enough space for the dup date instance
 	Date *dupStruct = (Date *)malloc(sizeof(Date));
+
 	//NULL check. dupStruct is pointer to null if malloc fails
 	if (dupStruct != NULL) {
 		strcpy(dupStruct->yyyymmdd, d->yyyymmdd);

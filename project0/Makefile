@@ -1,15 +1,19 @@
 OBJECTS = date.o tldlist.o tldmonitor.o
 CFLAGS = -std=c99 -W -Wall -g
 CC = gcc
-PROG_NAME = project0
-ARGS = 01/08/1999 31/07/2009 small.txt
+PROG_NAME = tldmonitor
+SMALL = 01/08/1999 31/07/2009 small.txt
+LARGE = 01/08/1999 31/07/2009 large.txt
 
-project0: $(OBJECTS)
-	$(CC) $(OBJECTS) -o project0
+tldmonitor: $(OBJECTS)
+	$(CC) $(OBJECTS) -o tldmonitor
 
 date.o: date.c date.h
 tldlist.o: tldlist.c tldlist.h
 tldmonitor.o: tldmonitor.c
 
-run: ${PROG_NAME}
-	./${PROG_NAME} ${ARGS}
+small: ${PROG_NAME}
+	./${PROG_NAME} ${SMALL}
+	
+large: ${PROG_NAME}
+	./${PROG_NAME} ${LARGE}

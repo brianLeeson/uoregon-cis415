@@ -197,8 +197,6 @@ static int avl_insert( TLDList *tree, char *value ) {
 		next = tree->root;
 
 		while(next != NULL) {
-			//printf("next value %s\n", next->value);
-			//printf("value %s\n", value);
 			last = next;
 
 			if (strcmp(value, next->value) < 0) {
@@ -209,7 +207,6 @@ static int avl_insert( TLDList *tree, char *value ) {
 
 			//We already inserted this node
 			} else if(strcmp(value, next->value) == 0) {
-				//puts("DUPLICATE");
 				next->count++;
 				return 1;
 			}
@@ -233,7 +230,6 @@ static int avl_insert( TLDList *tree, char *value ) {
 	return 1;
 }
 
-
 /* Do a depth first traverse of a node. */
 static void taraverse_node_inorder( TLDNode *node, TLDIterator *iter ) {
 
@@ -248,6 +244,17 @@ static void taraverse_node_inorder( TLDNode *node, TLDIterator *iter ) {
 static void create_inorder_array( TLDList *tree, TLDIterator *iter) {
 	taraverse_node_inorder( tree->root, iter );
 }
+
+static void destroy_node_inorder( TLDNode *node ) {
+
+	if(node != NULL){
+		destroy_node_inorder(node->left);
+		destroy_node_inorder(node->right);
+		free(node);
+	}
+}
+
+//IMPLEMENTATION
 
 /*
  * tldlist_create generates a list structure for storing counts against
@@ -272,15 +279,6 @@ TLDList *tldlist_create(Date *begin, Date *end){
 	return tldstruct;
 }
 
-static void destroy_node_inorder( TLDNode *node ) {
-
-	if(node != NULL){
-		destroy_node_inorder(node->left);
-		destroy_node_inorder(node->right);
-		free(node);
-	}
-}
-
 /*
  * tldlist_destroy destroys the list structure in `tld'
  *
@@ -291,7 +289,6 @@ void tldlist_destroy(TLDList *tld){
 	if(tld->root != NULL){
 			destroy_node_inorder(tld->root);
 	}
-	//free TLDlist struct
 	free(tld);
 }
 
@@ -306,7 +303,6 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d){
 	int afterEnd = date_compare(tld->end, d) < 0;
 
 	if (beforeStart || afterEnd){ //falls out of date range
-		puts("out of range");
 		return 0;
 	}
 	//process hostname
@@ -363,7 +359,6 @@ TLDIterator *tldlist_iter_create(TLDList *tld){
  */
 TLDNode *tldlist_iter_next(TLDIterator *iter){
 	if(iter->index >= iter->size){
-		//printf("reached end. size %d\n", iter->size);
 		return NULL;
 	}
 	return iter->array[iter->index++];
