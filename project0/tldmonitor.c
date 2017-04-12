@@ -81,7 +81,9 @@ int main(int argc, char *argv[]) {
         }
     }
     total = (double)tldlist_count(tld);
+    puts("right before making iterator");
     it = tldlist_iter_create(tld);
+    puts("right after making iterator");
     if (it == NULL) {
         fprintf(stderr, "Unable to create iterator\n");
         goto error;

@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "tldlist.h"
 #include "date.h"
 
@@ -175,6 +176,8 @@ static void avl_balance( TLDList *tree ) {
 }
 
 static int avl_insert( TLDList *tree, char *value ) {
+	puts("inserting:");
+	printf("%s\n", value);
 	//success returns 1, failure returns 0
 	TLDNode *node = NULL;
 	TLDNode *next = NULL;
@@ -226,15 +229,16 @@ static int avl_insert( TLDList *tree, char *value ) {
 
 /* Do a depth first traverse of a node. */
 static void avl_traverse_node_dfs( TLDNode *node, TLDIterator *iter ) {
-
-	if( node->left != NULL ){
+	puts("traversing");
+	printf("%s\n", node->value);
+	if(node->left){
 		avl_traverse_node_dfs(node->left, iter);
 	}
 	iter->next = node;
 	iter->next++;
 
 
-	if( node->right != NULL ){
+	if( node->right){
 		avl_traverse_node_dfs( node->right, iter);
 	}
 
@@ -244,6 +248,7 @@ static void avl_traverse_node_dfs( TLDNode *node, TLDIterator *iter ) {
 
 /* Do a depth first traverse of a tree. and populate the iter with all nodes */
 static void avl_traverse_dfs( TLDList *tree, TLDIterator *iter) {
+
 	avl_traverse_node_dfs( tree->root, iter );
 }
 
@@ -317,7 +322,7 @@ TLDIterator *tldlist_iter_create(TLDList *tld){
 	if (iter != NULL){
 		TLDNode **array = (TLDNode **) malloc((tld->uniqueCount) * sizeof(TLDNode *));
 		if(array != NULL){
-			//while still unique nodes, malloc space for one, put it in array
+			//initialize
 			iter->array = array;
 			iter->next = array[0];
 			iter->size = tld->uniqueCount;

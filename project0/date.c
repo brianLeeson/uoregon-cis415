@@ -45,7 +45,7 @@ Date *date_create(char *datestr){
 		strcat(dateStruct->yyyymmdd, delim);
 		strcat(dateStruct->yyyymmdd, day);
 	}
-	printf("dateSruct is %s\n\n", dateStruct->yyyymmdd);
+	//printf("dateSruct is %s\n\n", dateStruct->yyyymmdd);
 	return dateStruct;
 }
 
