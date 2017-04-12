@@ -206,7 +206,8 @@ static int avl_insert( TLDList *tree, char *value ) {
 				next = next->right;
 
 			//We already inserted this node
-			} else if( value == next->value ) {
+			} else if( strcmp(value, next->value) ) {
+				puts("DUPLICATE");
 				next->count++;
 				return 1;
 			}
@@ -232,8 +233,7 @@ static void taraverse_node_inorder( TLDNode *node, TLDIterator *iter ) {
 
 	if(node != NULL){
 		taraverse_node_inorder(node->left, iter);
-		iter->next = node;
-		iter->next++;
+		iter->array[iter->index++] = node;
 		taraverse_node_inorder( node->right, iter);
 	}
 }
@@ -282,14 +282,25 @@ void tldlist_destroy(TLDList *tld){
  */
 int tldlist_add(TLDList *tld, char *hostname, Date *d){
 	//if begin<d && d<end
-	int afterStart = date_compare(tld->begin, d) < 0;
-	int beforEnd = date_compare(d, tld->end) > 0;
+	int beforeStart = date_compare(d, tld->begin) < 0;
+	int afterEnd = date_compare(tld->end, d) < 0;
 
-	if (!(afterStart && beforEnd)){ //falls out of date range
+	if (beforeStart || afterEnd){ //falls out of date range
+		puts("out of range");
 		return 0;
 	}
+	//process hostname
+	char *delim = ".";
+	char *check;
+	char *prev;
 
-	if (!(avl_insert(tld, hostname))){ //failed to insert
+	check = strtok(hostname, delim);
+	while (check != NULL){
+		prev = check;
+		check = strtok(NULL, delim);
+	}
+
+	if (!(avl_insert(tld, prev))){ //failed to insert
 		return 0;
 	}
 	tld->adds++;
@@ -315,13 +326,12 @@ TLDIterator *tldlist_iter_create(TLDList *tld){
 		if(array != NULL){
 			//initialize
 			iter->array = array;
-			iter->next = array[0];
 			iter->size = tld->uniqueCount;
 			iter->index = 0;
 
 			//traverse and populate
 			create_inorder_array(tld, iter);
-			iter->next = array[0];
+			iter->index = 0;
 		}
 	}
 	return iter;
@@ -333,13 +343,10 @@ TLDIterator *tldlist_iter_create(TLDList *tld){
  */
 TLDNode *tldlist_iter_next(TLDIterator *iter){
 	if(iter->index >= iter->size){
+		//printf("reached end. size %d\n", iter->size);
 		return NULL;
 	}
-
-	TLDNode *temp = iter->next;
-	iter->next++;
-	iter->index++;
-	return temp;
+	return iter->array[iter->index++];
 }
 
 /*
