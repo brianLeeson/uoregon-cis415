@@ -1,7 +1,7 @@
+#include "date.h"
+#include "tldlist.h"
 #include <stdio.h>
 #include <string.h>
-#include "../project0/date.h"
-#include "../project0/tldlist.h"
 
 #define USAGE "usage: %s begin_datestamp end_datestamp [file] ...\n"
 
@@ -54,9 +54,8 @@ int main(int argc, char *argv[]) {
         goto error;
     }
     if (date_compare(begin, end) > 0) {
-    	printf("compare is wrong");
         fprintf(stderr, "%s > %s\n", argv[1], argv[2]);
-        goto error;
+	goto error;
     }
     tld = tldlist_create(begin, end);
     if (tld == NULL) {

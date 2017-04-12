@@ -1,7 +1,7 @@
 #ifndef _TLDLIST_H_INCLUDED_
 #define _TLDLIST_H_INCLUDED_
 
-#include "../project0/date.h"
+#include "date.h"
 
 typedef struct tldlist TLDList;
 typedef struct tldnode TLDNode;
