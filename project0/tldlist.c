@@ -229,8 +229,7 @@ static int avl_insert( TLDList *tree, char *value ) {
 
 /* Do a depth first traverse of a node. */
 static void avl_traverse_node_dfs( TLDNode *node, TLDIterator *iter ) {
-	puts("traversing");
-	printf("%s\n", node->value);
+
 	if(node->left){
 		avl_traverse_node_dfs(node->left, iter);
 	}
