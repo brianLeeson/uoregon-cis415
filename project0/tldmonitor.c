@@ -81,16 +81,12 @@ int main(int argc, char *argv[]) {
         }
     }
     total = (double)tldlist_count(tld);
-    //puts("right before making iterator");
     it = tldlist_iter_create(tld);
-    //puts("right after making iterator");
     if (it == NULL) {
         fprintf(stderr, "Unable to create iterator\n");
         goto error;
     }
-    puts("output below:");
     while ((n = tldlist_iter_next(it))) {
-    	//printf("count is %ld\n", tldnode_count(n));
         printf("%6.2f %s\n", 100.0 * (double)tldnode_count(n)/total, tldnode_tldname(n));
     }
     tldlist_iter_destroy(it);

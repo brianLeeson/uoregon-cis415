@@ -38,12 +38,12 @@ Date *date_create(char *datestr){
 		char *year = strtok(NULL, delim);
 		//printf("%s %s %s\n", year, month, day);
 
-		//dateStruct->yyyymmdd = "test";
 		strcat(dateStruct->yyyymmdd, year);
 		strcat(dateStruct->yyyymmdd, delim);
 		strcat(dateStruct->yyyymmdd, month);
 		strcat(dateStruct->yyyymmdd, delim);
 		strcat(dateStruct->yyyymmdd, day);
+		printf("yyyymmdd is %s\n", dateStruct->yyyymmdd);
 	}
 	//printf("dateSruct is %s\n\n", dateStruct->yyyymmdd);
 	return dateStruct;

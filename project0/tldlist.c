@@ -50,7 +50,7 @@ static TLDNode *avl_create_node() {
 
 	node->left = NULL;
 	node->right = NULL;
-	node->count = 0;
+	node->count = 1;
 
 	return node;
 }
@@ -176,8 +176,8 @@ static void avl_balance( TLDList *tree ) {
 }
 
 static int avl_insert( TLDList *tree, char *value ) {
-	puts("inserting:");
-	printf("%s\n", value);
+	//puts("inserting:");
+	//printf("%s\n", value);
 	//success returns 1, failure returns 0
 	TLDNode *node = NULL;
 	TLDNode *next = NULL;
@@ -197,19 +197,25 @@ static int avl_insert( TLDList *tree, char *value ) {
 		next = tree->root;
 
 		while(next != NULL) {
+			//printf("next value %s\n", next->value);
+			//printf("value %s\n", value);
 			last = next;
 
-			if (value < next->value) {
+			if (strcmp(value, next->value) < 0) {
 				next = next->left;
 
-			} else if( value > next->value ) {
+			} else if(strcmp(value, next->value) > 0) {
 				next = next->right;
 
 			//We already inserted this node
-			} else if( strcmp(value, next->value) ) {
-				puts("DUPLICATE");
+			} else if(strcmp(value, next->value) == 0) {
+				//puts("DUPLICATE");
 				next->count++;
 				return 1;
+			}
+			else{
+				puts("you should not get here");
+				return 0;
 			}
 		}
 
@@ -266,12 +272,26 @@ TLDList *tldlist_create(Date *begin, Date *end){
 	return tldstruct;
 }
 
+static void destroy_node_inorder( TLDNode *node ) {
+
+	if(node != NULL){
+		destroy_node_inorder(node->left);
+		destroy_node_inorder(node->right);
+		free(node);
+	}
+}
+
 /*
  * tldlist_destroy destroys the list structure in `tld'
  *
  * all heap allocated storage associated with the list is returned to the heap
  */
 void tldlist_destroy(TLDList *tld){
+	//free nodes
+	if(tld->root != NULL){
+			destroy_node_inorder(tld->root);
+	}
+	//free TLDlist struct
 	free(tld);
 }
 
