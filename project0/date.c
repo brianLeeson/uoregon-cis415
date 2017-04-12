@@ -76,6 +76,6 @@ int date_compare(Date *date1, Date *date2){
  * date_destroy returns any storage associated with `d' to the system
  */
 void date_destroy(Date *d){
-	free(d->yyyymmdd);
+	free(d);
 }
 
