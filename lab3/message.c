@@ -61,11 +61,12 @@ Argparse *ParseArguments(int argc, char*argv[])
 		position =0;
 		
 		// code state switching such as from -t -> makes a mode
+		// I don't understand what this is asking.
 		
 		switch(mode)
 		{
 			case 0:
-				if((strcmp("--message",arg)==0) || strcmp("-M",arg)==0)
+				if((strcmp("--message",arg)==0) || strcmp("-m",arg)==0)
 				{
 					mode = 1;
 				}
@@ -88,7 +89,7 @@ Argparse *ParseArguments(int argc, char*argv[])
 		}									
 	}
 	
-	return malloc_Argparse(thread_count,timer_count_upper,timer_count_lower,arg);	
+	return malloc_Argparse(thread_count,timer_count_upper,timer_count_lower,msg);	
 }
 
 void print_Argparse(Argparse *args)
