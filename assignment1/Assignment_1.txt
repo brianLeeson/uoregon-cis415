@@ -1,0 +1,29 @@
+CIS 415
+Assignment 1
+Brian Leeson
+
+Section 1
+1) The two models of interprocess communication are shared memory and message passing.
+Shared memory allows for faster speeds of information exchange, but data must be protected from bing overwritten by two processes that may be using the shared data at the same time.
+With message passing there is no need for synchronization, so it is easier to implement for the programmer. Message passing is necessarily slower as it cannot happen at memory read/write speeds.
+
+2) The separation of policy and mechanism allows for flexibility. If policy was embedded in mechanism, changing the policy section of the code might also require reimplementation parts of the mechanism. Or worse it could break the mechanism making nothing happen no matter the policy.
+
+3) When the kernel has decided that a context switch needs to occur, the state (registers, open files, program counter) of the currently running process is saved and packaged as a Process Control Block, or PCB, and place in the appropriate queue. The PCB that has been chosen to run is unpacked and finally the first instruction of the new process is put into the program counter. After the program counter is loaded, the new process begins to run.
+
+4)
+a) Synchronous, or blocking, communication ensures that the message is delivered; the sender then blocks until the receiver signals that it is ready to receive. On the programmer level we don't have to worry about  locks on shared memory management or handle buffers. Unfortunately, this can be slow for the system to execute. If sending takes a long time the receiver is going to be waiting, doing nothing.
+Asynchronous , or nonblocking, communication allows for a producer consumer relationship and faster code as information can we passed at read/write speeds. If the buffer is always non-empty, there is always work to be done and with multiple cores the work can be done faster than synchronous code. A downside is the overhead work that the programmer must do to prevent race conditions on the shared memory.
+b) Unbounded buffers are examples of automatic buffering. They allow for seemingly infinite buffer size so the sending never has to block as the buffer will never be full.  This requires that the buffer is resized when space is low or that items are produced, on average, at the same rate that they are consumed. Explicit buffering sets an upper limit for the buffer size. The programmer does not have to implement buffer resizing, but the sender and reviver must block as needed.
+c) Send by copy can only send small amounts of data. Send by reference allows for arbitrary size as a pointer to shared memory is sent. Pass by reference is faster as only the pointer needs to be copied and sent, but can only be used on intra-systems as physically separated systems don't usually share memory.
+d) Fixed sized is more easily implemented by the system, but programming it is harder. Variable sized is the other way around. 
+
+Section 2
+Describe a procedure that uses files in the Linux proc file system to extract as much information as you can. Particularly:
+a) The command that created process? "cat cmdline" The command that created it is the first line.
+b) Which executable image is the process running? "cat comm" The executable image is the first line.
+c) What aspects of the file process's status can you report? "cat status" displays many fields about the process's status. What state it's in, it's pid, pid of it's parent, how many threads it has, and how often it has been context switched.
+d) How much I/O has the process performed? "cat io" displays I/O statistic like bytes and system calls read/written.
+e) Process memory usage? "cat smaps" will display all memory mapped regions and their memory usage. Useful information includes Size (total memory usage) and Rss (RAM usage).
+
+

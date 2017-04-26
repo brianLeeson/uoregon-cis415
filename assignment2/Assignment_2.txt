@@ -1,0 +1,31 @@
+Brian Leeson
+CIS 415
+Assignment #2
+
+#1 OSC 4.14
+a) How many threads will you create to perform the input and output? 
+1 thread can handle both the input and the output. The input and the output cannot happen simultaneously so the is no need to create multuple threads to handle this both input and output.
+
+b) How many threads will you create for the CPU-intensive portion of the application? 
+4 threads to handle the CPU intensive portion. Iff we can assume that the data can be processes asyncronously we can keep all four processors busy with 4 threads. Because these threada don't need to write or read from disk, they shouldn't need to wait and have another thread to replace them.
+
+2. OSC 4.18
+a) The number of kernel threads allocated to the program is FEWER than the number of
+processing cores.
+This program could run faster if given more thread as it could then be running on all cores concurrently.
+
+b) The number of kernel threads allocated to the program is equal to the number of
+processing cores. 
+This program could potentially be running on all cores concurrently, taking full advantage of multithreading. Faster than a).
+
+c) The number of kernel threads allocated to the program is greater than the number of
+processing cores but is still less than the number of user-level threads. Should be faster than situtation b) as more kernal threads means more flexibility when scheduling in case one of the threads is needs to wait.
+
+3. OSC 6.6
+I/O bound processes, on average, take less time one the CPU because it blocks more frequency than non I/O bound processes. A scheduler that favors processes based on past processor time will favor I/O for this reason. This should not starve CPU-bound programs as I/O takes a relatively long time to do and the process would be in a waiting queue during that time.
+
+4. OSC 6.11
+a) CPU utilization and response time.
+Response time, the time it takes for an action to have an effect, goes down the with shorter limits on how long a process is allowed to use the CPU. However this creates more context switches and everytime we do a context switch there is a period of time where the processor is not utilized. With a higher response time comes less utilization and visa versa.
+
+b)
