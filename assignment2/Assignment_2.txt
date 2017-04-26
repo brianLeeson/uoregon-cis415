@@ -28,4 +28,10 @@ I/O bound processes, on average, take less time one the CPU because it blocks mo
 a) CPU utilization and response time.
 Response time, the time it takes for an action to have an effect, goes down the with shorter limits on how long a process is allowed to use the CPU. However this creates more context switches and everytime we do a context switch there is a period of time where the processor is not utilized. With a higher response time comes less utilization and visa versa.
 
-b)
+b) Average turnaround time and maximum waiting time
+In order to minimize the average turnaround time one would use a priority queue with the shortest jobs done first. These jobs would be done to completion. This algorithm will minimized the convoy efecct and result in the shortest average turnaround time. However the max waiting time will be huge and the final process to run must wait until all other processes have finished. We can reduce the max wait time be only allowing processes to run for X time before giving control to the next process. Now our max wait time is X. This method increases the average turnaround time by potentially making processes take longer to complete.
+
+c) I/O device utilization and CPU utilization
+Without preemption (allowing a process to run until completion), we would maximize CPU utilization as it would do as few context switches as possible. However there would be a convoy effect as I/O processes sit in the ready to run queue waiting to run. With preemption we would could assign the the shorter I/O tasks to the CPU as soon as they are ready and increase I/O device utilization, but that would cause more context switches and decrease CPU utilization
+
+
