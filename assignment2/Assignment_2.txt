@@ -54,7 +54,7 @@ b) You are given a set of independent, periodic tasks: T1 = (0, 4, 1), T2 = (0, 
 	check hyperperiod:
 		H = lcm {4, 8, 20, 5} = 40 (hyperperiod is below)
 		Because all deadlines are met in the hyperperiod we can conclude that with the new task RM
-		will create a feasable schedule.
+		will create a feasible schedule.
 
 HYPERPEROID with RM
 T1 = (0, 4, 1), 
