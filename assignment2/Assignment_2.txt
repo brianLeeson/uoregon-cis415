@@ -41,10 +41,16 @@ Rate monotonic works by scheduling jobs in order of shortest job first. It is a 
 b) You are given a set of independent, periodic tasks: T1 = (0, 4, 1), T2 = (0, 8, 2), T3 = (0, 20, 2).
 	i. There exists a feasible schedule for these tasks using RM. Why? (4 points)
 	Show that total utilization <= scheduable utilization as RM is a nonOptimal algorithm
-	total utilization = sum of e/p for a tasks. (1/4) + (2/8) + (2/20) = (3/5) = .6
+	total utilization = sum of e/p for all tasks. (1/4) + (2/8) + (2/20) = (3/5) = .6
 	schedulable utilization = n(2^(1/n) - 1) = 3(2^(1/3) - 1) = 0.7798
 	.6 < 0.7798, therefor a feasible schedule for these tasks exist.
 
-	ii.
-
+	ii. A colleague asserts that π = 5 will work. Do you agree? Why or why not?
+	if π = 5, T1 = (0, 4, 1), T2 = (0, 8, 2), T3 = (0, 20, 2),  T4 = (0, 5, 1)
+	check if total utilization <= scheduable utilization:
+		total utilization = sum of e/p for all tasks. (1/4) + (2/8) + (2/20) + (1/5) = (4/5) .8
+		schedulable utilization = 0.7568
+		total utilization is not <= schedulable utilization
+	check hyperperiod:
+		H = lcm {4, 8, 20, 5} = 40
 
