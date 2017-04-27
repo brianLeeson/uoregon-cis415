@@ -52,5 +52,54 @@ b) You are given a set of independent, periodic tasks: T1 = (0, 4, 1), T2 = (0, 
 		schedulable utilization = 0.7568
 		total utilization is not <= schedulable utilization
 	check hyperperiod:
-		H = lcm {4, 8, 20, 5} = 40
+		H = lcm {4, 8, 20, 5} = 40 (hyperperiod is below)
+		Because all deadlines are met in the hyperperiod we can conclude that with the new task RM
+		will create a feasable schedule.
 
+HYPERPEROID with RM
+T1 = (0, 4, 1), 
+T2 = (0, 8, 2), 
+T3 = (0, 20, 2),  
+T4 = (0, 5, 1)
+Time	Scheduled
+0	J11
+1	J41
+2	J21
+3	J21
+4	J12
+5	J42
+6	J31
+7	J31
+8	J13		
+9	J22
+10	J43
+11	J22
+12	J14
+13	-
+14	-
+15	J44
+16	J15
+17	J23
+18	J23
+19	-
+20	J16
+21	J45
+22	J32
+23	J32
+24	J17
+25	J46
+26	J24
+27	J24
+28	J18
+29	-
+30	J47
+31	-
+32	J19
+33	J25
+34	J25
+35	J48
+36	J110
+37	-
+38	-
+39	-
+40	next hyperperoid
