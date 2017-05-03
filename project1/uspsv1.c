@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 //USPS_QUANTUM_MSEC
 
@@ -32,12 +33,52 @@ int getQuantum(int argc, char *argv[]){
 	return quantum;
 }
 
+char* getWorkload(int argc, char *argv[]){
+	char* fileName = NULL;
+	int fd;
+
+
+	//check if file in argv
+	if(argc > 1){
+		if (p1strneq(argv[1], "-", 1)){
+			fileName = argv[2];
+		}
+		else if (p1strneq(argv[2], "-", 1)){
+			fileName = argv[2];
+		}
+	}
+	fd = open(fileName, 0);
+
+	// if filename not in argv read from stdin
+	if (fd < 0){
+		fd = 0;
+	}
+	int n;
+	char buff[256];
+	while((n = p1getline(fd, buff, sizeof(buff))) < 0){
+		puts(buff);
+	}
+
+
+	return fileName;
+}
+
 int main(int argc, char *argv[]){
 	//get quantum
 	printf("%d\n", getQuantum(argc, argv));
 	if (getQuantum(argc, argv) < 0){
-		puts("No quantum found or specified.");
+		puts("No quantum found or specified."); // TODO: remove?
 		exit(1);
 	}
+
+	//get workload file form cmd line
+	char *filename = getWorkload(argc, argv);
+	if (filename == NULL){
+		//get workload file from stdin
+
+	}
+	puts(filename);
+
+	//run each program
 
 }
