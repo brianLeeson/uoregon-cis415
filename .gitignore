@@ -2,3 +2,5 @@
 project0/.cdproject
 project0/.settings
 project0/.project
+*.o
+usps

@@ -146,10 +146,10 @@ void p1putint(int fd, int number) {
 void p1putstr(int fd, char *s) {
     int n = p1strlen(s);
     write(fd, s, n);
-    //while (*s != '\0') {
-        //write(fd, s, 1);
-        //s++;
-    //}
+    while (*s != '\0') {
+        write(fd, s, 1);
+        s++;
+    }
     fsync(fd);
 }
 

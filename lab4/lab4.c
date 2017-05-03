@@ -84,17 +84,21 @@ void execute_loop(int loop_count)
 
 void signal_handler(int signo)
 {
-	// trap all the signals here. 
-	// print a meaningful message for each signal.
-
-	printf("Recieved signal %d in process %d\n",signo,(int)getpid());
-
+	// trap all the signals here by print a meaningful message for each signal.
+	switch(signo) {
+		case SIGHUP:
+			printf("Recieved signal SIGHUP in process %d\n", (int)getpid());
+			break;
+		//other cases go here.
+	
+	}
+	printf("Recieved signal %d in process %d\n",signo, (int)getpid());
 }
 
 void subscribe_to_signals()
 {
 	// call the system to trap the signals in the signal handler here.
-	signal(SIGHUP, signal_handler)
+	signal(SIGHUP, signal_handler);
 }
 
 int main(int argc, char *argv[])
