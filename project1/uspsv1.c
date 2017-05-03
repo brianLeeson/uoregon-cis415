@@ -34,9 +34,13 @@ int getQuantum(int argc, char *argv[]){
 }
 
 char* getWorkload(int argc, char *argv[]){
+	/*
+	 * function takes arc and argv
+	 *  TODO: return an array of commands
+	 */
+
 	char* fileName = NULL;
 	int fd;
-
 
 	//check if file in argv
 	if(argc > 1){
@@ -47,18 +51,25 @@ char* getWorkload(int argc, char *argv[]){
 			fileName = argv[2];
 		}
 	}
-	fd = open(fileName, 0);
 
-	// if filename not in argv read from stdin
-	if (fd < 0){
-		fd = 0;
-	}
 	int n;
 	char buff[256];
-	while((n = p1getline(fd, buff, sizeof(buff))) < 0){
-		puts(buff);
+
+	// if filename in argv
+	if (fileName != NULL){
+		fd = open(fileName, 0);
+		while((n = p1getline(fd, buff, sizeof(buff))) < 0){
+			puts(buff);
+		}
 	}
 
+	//else read from stdin
+	else{
+		fd = 0;
+		while((n = p1getline(fd, buff, sizeof(buff))) > 0){
+			puts(buff);
+		}
+	}
 
 	return fileName;
 }
@@ -71,13 +82,8 @@ int main(int argc, char *argv[]){
 		exit(1);
 	}
 
-	//get workload file form cmd line
-	char *filename = getWorkload(argc, argv);
-	if (filename == NULL){
-		//get workload file from stdin
-
-	}
-	puts(filename);
+	//command array from commandline or stdin
+	char *fileName = getWorkload(argc, argv);
 
 	//run each program
 
