@@ -3,8 +3,19 @@
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
-//USPS_QUANTUM_MSEC
+typedef struct command{
+	struct command *next;
+	char *cmd;
+	char *args[];
+}Command;
+
+typedef struct commandList{
+	Command *start;
+}CommandList;
+
+
 
 int getQuantum(int argc, char *argv[]){
 	/* function takes argc and argv
@@ -33,7 +44,7 @@ int getQuantum(int argc, char *argv[]){
 	return quantum;
 }
 
-char* getWorkload(int argc, char *argv[]){
+CommandList* getWorkload(int argc, char *argv[]){
 	/*
 	 * function takes arc and argv
 	 *  TODO: return an array of commands
@@ -74,16 +85,32 @@ char* getWorkload(int argc, char *argv[]){
 	return fileName;
 }
 
+int createCommandList(){
+
+}
+
+void destroyCommandList(){
+
+}
+
+int createCommand(){
+
+}
+
+void destroyCommand(){
+
+}
+
 int main(int argc, char *argv[]){
 	//get quantum
-	printf("%d\n", getQuantum(argc, argv));
-	if (getQuantum(argc, argv) < 0){
+	int quantum;
+	if ((quantum = getQuantum(argc, argv)) < 0){
 		puts("No quantum found or specified."); // TODO: remove?
 		exit(1);
 	}
 
 	//command array from commandline or stdin
-	char *fileName = getWorkload(argc, argv);
+	CommandList *argList = getWorkload(argc, argv);
 
 	//run each program
 
