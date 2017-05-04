@@ -222,7 +222,7 @@ CommandList* getWorkload(int argc, char *argv[]){
 	return commandList;
 }
 
-void launchProgramgs(CommandList *argList){
+void launchPrograms(CommandList *argList){
 	/*
 	 * function takes a commandlist that represents all programs to execute.
 	 * calls all programs in the argslist
@@ -234,7 +234,7 @@ void launchProgramgs(CommandList *argList){
 	Command *command = argList->start->next;
 
 	//malloc for pidList
-	pidList = (int *) malloc(numprograms * sizeof(int)); //TODO: dealloc
+	pidList = (int *) malloc(numprograms * sizeof(int));
 	if (pidList == NULL){
 		exit(1); //TODO: make proper
 	}
@@ -246,6 +246,10 @@ void launchProgramgs(CommandList *argList){
 			char *prog = command->cmd;
 			char **args = command->args;
 			execvp(prog, args);
+
+			//if illegal program or unallowed program
+			p1perror(2, "execvp fail");
+			exit(1);
 		}
 		command = command->next;
 	}
@@ -269,22 +273,8 @@ int main(int argc, char *argv[]){
 	//command array from commandline or stdin
 	CommandList *argList = getWorkload(argc, argv);
 
-	//print commands an and args
-//	puts("\n**printing cmds and args**");
-//	Command *command = argList->start;
-//	if(command != NULL){
-//		do{
-//			printf("cmd: %s\n", command->cmd);
-//			int i = 0;
-//			char *arg;
-//			while((arg = command->args[i++]) != NULL){
-//				printf("\targ%d: %s\n", i-1, arg);
-//			}
-//		}while((command = command->next) != NULL);
-//	}
-
 	//run each program 	and wait until they are all done
-	launchProgramgs(argList);
+	launchPrograms(argList);
 
 	//free
 	destroyCommandList(argList);
