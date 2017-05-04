@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #define BUFFSIZE 256
 
@@ -241,8 +242,8 @@ void launchProgramgs(CommandList *argList){
 	//get command, skip dummy
 	Command *command = argList->start->next;
 
-	//malloc for pid
-	pidList = (int *) malloc(numprograms * sizeof(int));
+	//malloc for pidList
+	pidList = (int *) malloc(numprograms * sizeof(int)); //TODO: dealloc
 	if (pidList == NULL){
 		exit(1); //TODO: make proper
 	}
@@ -251,9 +252,14 @@ void launchProgramgs(CommandList *argList){
 	for(i=0; i < numprograms; i++){
 		pidList[i] = fork();
 		if (pidList[i] == 0){
-			char *
-			execvp();
+			char *prog = command->cmd;
+			char **args = command->args;
+			execvp(prog, args);
 		}
+		command = command->next;
+	}
+	for(i=0; i < numprograms; i++){
+		waitpid(pidList[i],0 ,0 );
 	}
 }
 
