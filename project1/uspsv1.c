@@ -23,7 +23,6 @@ Command *createCommand(int numArgs){
 	Command *commandStruct = (Command *)malloc(sizeof(Command));
 
 	if (commandStruct != NULL){
-		//malloc for at most 3 arguments of at most 30 chars each
 		commandStruct->args = (char **) malloc((numArgs+1) * sizeof(char *));
 
 		if (commandStruct->args == NULL){
@@ -37,7 +36,23 @@ Command *createCommand(int numArgs){
 }
 
 void destroyCommand(Command *command){
-	//TODO: A lot
+	//free cmd
+	puts("free cmd");
+	if (command->cmd != NULL){
+		free(command->cmd);
+
+	}
+
+	//free args
+	int i = 0;
+	char *current;
+	while((current = command->args[i++]) != NULL){
+		puts("free current char*");
+		free(current);
+	}
+	//free struct
+	puts("free command");
+	free(command);
 }
 
 CommandList *createCommandList(){
@@ -51,10 +66,18 @@ CommandList *createCommandList(){
 }
 
 void destroyCommandList(CommandList *commandList){
+	puts("destroying CL");
 	// free commands
 	Command *current;
 	if ((current = commandList->start) != NULL){
-		Command *next = NULL;
+		Command *next;
+
+//		puts("destroying dummy first");
+//		//free dummy struct
+//		current = first->next;
+//		free(first);
+
+		puts("destroying C");
 		//while more command structs to free
 		while ((next = current->next) != NULL){
 			//free current
@@ -108,15 +131,14 @@ int getQuantum(int argc, char *argv[]){
 	return quantum;
 }
 
-CommandList *setCommandList(int fd, CommandList *commandList){
+void setCommandList(int fd, CommandList *commandList){
 	int n;
 	char buff[BUFFSIZE];
 	Command *prevCommand = NULL;
 	Command *currCommand = NULL;
-	Command *nextCommand = NULL;
 
 	//make dummy first Command
-	prevCommand = createCommand(1);
+	prevCommand = createCommand(0);
 	if (prevCommand == NULL){
 		exit(1); //TODO make proper
 	}
@@ -168,7 +190,6 @@ CommandList *setCommandList(int fd, CommandList *commandList){
 	if (commandList->start != NULL){
 		prevCommand->next = NULL;  //redundant?
 	}
-	return commandList;
 }
 
 CommandList* getWorkload(int argc, char *argv[]){
@@ -203,13 +224,13 @@ CommandList* getWorkload(int argc, char *argv[]){
 	if (fileName != NULL){
 		puts("workfile in cmd line");
 		fd = open(fileName, 0);
-		commandList = setCommandList(fd, commandList);
+		setCommandList(fd, commandList);
 	}
 
 	//else read from stdin
 	else{
 		fd = 0;
-		commandList = setCommandList(fd, commandList);
+		setCommandList(fd, commandList);
 	}
 
 	return commandList;
@@ -217,10 +238,6 @@ CommandList* getWorkload(int argc, char *argv[]){
 
 
 int main(int argc, char *argv[]){
-	//test
-//	char *t = (char *) malloc(sizeof(char *));
-//	t = "cantalope";
-//	printf("%s\n", t);
 
 	//get quantum
 	int quantum;
@@ -232,16 +249,23 @@ int main(int argc, char *argv[]){
 	//command array from commandline or stdin
 	CommandList *argList = getWorkload(argc, argv);
 
-	//print commands
-	puts("\n**printing cmds**");
+	//print commands an and args
+	puts("\n**printing cmds and args**");
 	Command *command = argList->start;
 	if(command != NULL){
 		do{
-			printf("should work: %s\n", command->cmd);
+			printf("cmd: %s\n", command->cmd);
+			int i = 0;
+			char *arg;
+			while((arg = command->args[i++]) != NULL){
+				printf("\targ%d: %s\n ", i-1, arg);
+			}
 		}while((command = command->next) != NULL);
 	}
 
 
 	//run each program
 
+	//free
+	destroyCommandList(argList);
 }
