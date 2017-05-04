@@ -7,6 +7,10 @@ ARGS = --quantum=1234 workload_file.txt
 test: uspsv1 cpu io
 	./$(PROG_NAME) $(ARGS)
 
+why: uspsv1 cpu io
+	gdb ./$(PROG_NAME)
+	
+
 uspsv1: $(OBJECTS) 
 	$(CC) $(OBJECTS) -o $(PROG_NAME)
 

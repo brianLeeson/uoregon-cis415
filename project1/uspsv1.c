@@ -68,7 +68,16 @@ void destroyCommandList(CommandList *commandList){
 	free(commandList);
 }
 
-
+void stripNewLine(char word[]){
+	int i = 0;
+	while (word[i] != '\0'){
+		if(word[i] == '\n'){
+			word[i] = '\0';
+			break;
+		}
+		i++;
+	}
+}
 
 int getQuantum(int argc, char *argv[]){
 	/* function takes argc and argv
@@ -99,10 +108,73 @@ int getQuantum(int argc, char *argv[]){
 	return quantum;
 }
 
+CommandList *setCommandList(int fd, CommandList *commandList){
+	int n;
+	char buff[BUFFSIZE];
+	Command *prevCommand = NULL;
+	Command *currCommand = NULL;
+	Command *nextCommand = NULL;
+
+	//make dummy first Command
+	prevCommand = createCommand(1);
+	if (prevCommand == NULL){
+		exit(1); //TODO make proper
+	}
+	commandList->start = prevCommand;
+
+	puts("getting from buff");
+	//while lines remaining in workfile
+	while((n = p1getline(fd, buff, sizeof(buff))) > 0){
+		puts(buff);
+
+		int numArgs = 0;
+		char wordBuff[100];
+		char tempBuff[BUFFSIZE];
+		int i = 0;
+
+		//get num args in buff
+		p1strcpy(tempBuff, buff);
+		while ((i = p1getword(tempBuff, i, wordBuff)) > 0){
+			numArgs++;
+		}
+		currCommand = createCommand(numArgs);
+		if (currCommand == NULL){
+			exit(1); //TODO make proper
+		}
+
+		char word[100]; //assume no arg is more than 99 chars long
+		int j = 0;
+
+		puts("getting cmd");
+		//get command
+		p1getword(buff, 0, word);
+		stripNewLine(word);
+		currCommand->cmd = p1strdup(word);
+		printf("should work: %s\n", currCommand->cmd);
+
+		puts("getting args");
+		//get args
+		int index = 0;
+		while ((j = p1getword(buff, j, word)) > 0){
+			stripNewLine(word);
+			currCommand->args[index++] = p1strdup(word);
+		}
+		currCommand->args[index+1] = NULL;
+
+		prevCommand->next = currCommand;
+		prevCommand = currCommand;
+	}
+	//prevCommand is last struct of linked list
+	if (commandList->start != NULL){
+		prevCommand->next = NULL;  //redundant?
+	}
+	return commandList;
+}
+
 CommandList* getWorkload(int argc, char *argv[]){
 	/*
 	 * function takes arc and argv
-	 *  TODO: return an array of commands
+	 * returns a linked list of command structs
 	 */
 	puts("In  getworkload");
 	char* fileName = NULL;
@@ -121,8 +193,7 @@ CommandList* getWorkload(int argc, char *argv[]){
 		}
 	}
 
-	int n;
-	char buff[BUFFSIZE];
+
 	CommandList *commandList = createCommandList();
 	if (commandList == NULL){
 		exit(1); //TODO make proper
@@ -132,64 +203,13 @@ CommandList* getWorkload(int argc, char *argv[]){
 	if (fileName != NULL){
 		puts("workfile in cmd line");
 		fd = open(fileName, 0);
-
-		Command *prevCommand = NULL;
-		Command *currCommand = NULL;
-		Command *nextCommand = NULL;
-		commandList->start = currCommand;
-
-		puts("getting from buff");
-		//while lines remaining in workfile
-		while((n = p1getline(fd, buff, sizeof(buff))) < 0){
-			puts("in while");
-			puts(buff);
-			//get num args in buff
-			int numArgs = 0;
-			char wordBuff[100];
-			char tempBuff[BUFFSIZE];
-
-			p1strcpy(tempBuff, buff);
-			while ((p1getword(tempBuff, 0, wordBuff)) > -1){
-				numArgs++;
-
-			}
-			currCommand = createCommand(numArgs);
-			if (currCommand == NULL){
-				exit(1); //TODO make proper
-			}
-
-			char word[100]; //assume no arg is more than 99 chars long
-			int i;
-
-			puts("getting cmd");
-			//get command
-			p1getword(buff, 0, word);
-			//TODO strip \n from word
-			currCommand->cmd = p1strdup(word);
-
-			puts("getting cmd");
-			//get args
-			int index = 0;
-			while ((i = p1getword(buff, i, word)) > 0){
-				//TODO strip \n from word
-				currCommand->args[index++] = p1strdup(word);
-			}
-			currCommand->args[index+1] = NULL;
-
-			prevCommand = currCommand;
-			currCommand->next = nextCommand;
-			currCommand = nextCommand;
-		}
-		//preCommand is end of linked list
-		prevCommand->next = NULL;
+		commandList = setCommandList(fd, commandList);
 	}
 
 	//else read from stdin
 	else{
 		fd = 0;
-		while((n = p1getline(fd, buff, sizeof(buff))) > 0){
-			puts(buff);
-		}
+		commandList = setCommandList(fd, commandList);
 	}
 
 	return commandList;
@@ -197,6 +217,11 @@ CommandList* getWorkload(int argc, char *argv[]){
 
 
 int main(int argc, char *argv[]){
+	//test
+//	char *t = (char *) malloc(sizeof(char *));
+//	t = "cantalope";
+//	printf("%s\n", t);
+
 	//get quantum
 	int quantum;
 	if ((quantum = getQuantum(argc, argv)) < 0){
@@ -206,6 +231,16 @@ int main(int argc, char *argv[]){
 
 	//command array from commandline or stdin
 	CommandList *argList = getWorkload(argc, argv);
+
+	//print commands
+	puts("\n**printing cmds**");
+	Command *command = argList->start;
+	if(command != NULL){
+		do{
+			printf("should work: %s\n", command->cmd);
+		}while((command = command->next) != NULL);
+	}
+
 
 	//run each program
 
