@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define BUFFSIZE 256
 
@@ -16,6 +17,7 @@ typedef struct command{
 //Linked List
 typedef struct commandList{
 	Command *start;
+	int numCommands; //this does not include dummy
 }CommandList;
 
 
@@ -29,6 +31,7 @@ Command *createCommand(int numArgs){
 			free(commandStruct);
 			return commandStruct = NULL;
 		}
+		commandStruct->cmd = NULL;
 		commandStruct->next = NULL;
 	}
 
@@ -37,21 +40,15 @@ Command *createCommand(int numArgs){
 
 void destroyCommand(Command *command){
 	//free cmd
-	puts("free cmd");
-	if (command->cmd != NULL){
-		free(command->cmd);
-
-	}
+	free(command->cmd);
 
 	//free args
 	int i = 0;
-	char *current;
-	while((current = command->args[i++]) != NULL){
-		puts("free current char*");
-		free(current);
+	char *arg;
+	while((arg = command->args[i++]) != NULL){
+		free(arg);
 	}
 	//free struct
-	puts("free command");
 	free(command);
 }
 
@@ -60,31 +57,29 @@ CommandList *createCommandList(){
 
 	if (commandListStruct != NULL){
 		commandListStruct->start = NULL;
+		commandListStruct->numCommands = 0;
 	}
-
 	return commandListStruct;
 }
 
 void destroyCommandList(CommandList *commandList){
-	puts("destroying CL");
 	// free commands
 	Command *current;
 	if ((current = commandList->start) != NULL){
 		Command *next;
 
-//		puts("destroying dummy first");
-//		//free dummy struct
-//		current = first->next;
-//		free(first);
+		//free dummy command struct
+		next = current->next;
+		free(current);
+		current = next;
 
-		puts("destroying C");
 		//while more command structs to free
-		while ((next = current->next) != NULL){
+		while (current != NULL){
 			//free current
+			next = current->next;
 			destroyCommand(current);
 			current = next;
 		}
-		destroyCommand(current);
 	}
 
 	// free CommandList
@@ -107,7 +102,6 @@ int getQuantum(int argc, char *argv[]){
 	 * gets quantum from environment or command line with command line priority
 	 * returns quantum if exists or specified, -1 otherwise.
 	 */
-	puts("In getquantum");
 
 	char *p = NULL;
 	int quantum = -1;
@@ -144,10 +138,8 @@ void setCommandList(int fd, CommandList *commandList){
 	}
 	commandList->start = prevCommand;
 
-	puts("getting from buff");
 	//while lines remaining in workfile
 	while((n = p1getline(fd, buff, sizeof(buff))) > 0){
-		puts(buff);
 
 		int numArgs = 0;
 		char wordBuff[100];
@@ -167,24 +159,22 @@ void setCommandList(int fd, CommandList *commandList){
 		char word[100]; //assume no arg is more than 99 chars long
 		int j = 0;
 
-		puts("getting cmd");
 		//get command
 		p1getword(buff, 0, word);
 		stripNewLine(word);
 		currCommand->cmd = p1strdup(word);
-		printf("should work: %s\n", currCommand->cmd);
 
-		puts("getting args");
 		//get args
 		int index = 0;
 		while ((j = p1getword(buff, j, word)) > 0){
 			stripNewLine(word);
 			currCommand->args[index++] = p1strdup(word);
 		}
-		currCommand->args[index+1] = NULL;
+		currCommand->args[index] = NULL;
 
 		prevCommand->next = currCommand;
 		prevCommand = currCommand;
+		commandList->numCommands++;
 	}
 	//prevCommand is last struct of linked list
 	if (commandList->start != NULL){
@@ -197,15 +187,12 @@ CommandList* getWorkload(int argc, char *argv[]){
 	 * function takes arc and argv
 	 * returns a linked list of command structs
 	 */
-	puts("In  getworkload");
 	char* fileName = NULL;
 	int fd;
 
 
 	//check if file in argv
 	if(argc > 1){
-		puts("checking cmd line for workfile");
-
 		if (p1strneq(argv[1], "-", 1)){
 			fileName = argv[2];
 		}
@@ -214,7 +201,6 @@ CommandList* getWorkload(int argc, char *argv[]){
 		}
 	}
 
-
 	CommandList *commandList = createCommandList();
 	if (commandList == NULL){
 		exit(1); //TODO make proper
@@ -222,7 +208,6 @@ CommandList* getWorkload(int argc, char *argv[]){
 
 	// if filename in argv
 	if (fileName != NULL){
-		puts("workfile in cmd line");
 		fd = open(fileName, 0);
 		setCommandList(fd, commandList);
 	}
@@ -236,6 +221,41 @@ CommandList* getWorkload(int argc, char *argv[]){
 	return commandList;
 }
 
+void launchProgramgs(CommandList *argList){
+	/*
+	 * function takes a commandlist that represents all programs to execute.
+	 * calls all programs in the argslist
+
+	for i in 0 .. numprograms-1
+		pid[i] = fork();
+		if (pid[i] == 0)
+			prepare argument structure;
+			execvp(program[i], args[i])
+	for i in 0 .. numprograms-1
+		wait(pid[i])
+
+	 */
+	int *pidList;
+	int numprograms = argList->numCommands;
+
+	//get command, skip dummy
+	Command *command = argList->start->next;
+
+	//malloc for pid
+	pidList = (int *) malloc(numprograms * sizeof(int));
+	if (pidList == NULL){
+		exit(1); //TODO: make proper
+	}
+
+	int i;
+	for(i=0; i < numprograms; i++){
+		pidList[i] = fork();
+		if (pidList[i] == 0){
+			char *
+			execvp();
+		}
+	}
+}
 
 int main(int argc, char *argv[]){
 
@@ -250,22 +270,27 @@ int main(int argc, char *argv[]){
 	CommandList *argList = getWorkload(argc, argv);
 
 	//print commands an and args
-	puts("\n**printing cmds and args**");
-	Command *command = argList->start;
-	if(command != NULL){
-		do{
-			printf("cmd: %s\n", command->cmd);
-			int i = 0;
-			char *arg;
-			while((arg = command->args[i++]) != NULL){
-				printf("\targ%d: %s\n ", i-1, arg);
-			}
-		}while((command = command->next) != NULL);
-	}
-
+//	puts("\n**printing cmds and args**");
+//	Command *command = argList->start;
+//	if(command != NULL){
+//		do{
+//			printf("cmd: %s\n", command->cmd);
+//			int i = 0;
+//			char *arg;
+//			while((arg = command->args[i++]) != NULL){
+//				printf("\targ%d: %s\n", i-1, arg);
+//			}
+//		}while((command = command->next) != NULL);
+//	}
 
 	//run each program
+	launchProgramgs(argList);
+
+	//wait until they are all done
 
 	//free
 	destroyCommandList(argList);
+
+	//exit when done
+	exit(0);
 }
