@@ -5,11 +5,12 @@
  *      Author: brian
  */
 
-#include <stdlib.h>
+
 #include <string.h>
-#include <stdio.h>
-#include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
@@ -255,7 +256,10 @@ void launchPrograms(CommandList *argList){
 			char **args = command->args;
 
 			int sig;
-			sigwait(SIGUSR1, &sig);
+			sigset_t signal_set;
+			sigaddset(&signal_set, SIGUSR1);
+			sigwait(&signal_set, &sig);
+			puts("done waiting");
 			execvp(prog, args);
 
 			//if illegal program or unallowed program
@@ -265,6 +269,7 @@ void launchPrograms(CommandList *argList){
 		command = command->next;
 	}
 	for(i=0; i < numprograms; i++){
+		printf("pid is %d\n", pidList[i]);
 		waitpid(pidList[i],0 ,0 );
 	}
 

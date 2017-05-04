@@ -46,3 +46,5 @@ iobound.o: iobound.c
 clean:
 	rm $(PROG_NAME)
 	rm *.o
+	rm cpubound 
+	rm iobound 
