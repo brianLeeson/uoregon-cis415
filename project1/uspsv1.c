@@ -226,15 +226,6 @@ void launchProgramgs(CommandList *argList){
 	/*
 	 * function takes a commandlist that represents all programs to execute.
 	 * calls all programs in the argslist
-
-	for i in 0 .. numprograms-1
-		pid[i] = fork();
-		if (pid[i] == 0)
-			prepare argument structure;
-			execvp(program[i], args[i])
-	for i in 0 .. numprograms-1
-		wait(pid[i])
-
 	 */
 	int *pidList;
 	int numprograms = argList->numCommands;
@@ -261,6 +252,9 @@ void launchProgramgs(CommandList *argList){
 	for(i=0; i < numprograms; i++){
 		waitpid(pidList[i],0 ,0 );
 	}
+
+	//dealloc pidList
+	free(pidList);
 }
 
 int main(int argc, char *argv[]){
@@ -289,10 +283,8 @@ int main(int argc, char *argv[]){
 //		}while((command = command->next) != NULL);
 //	}
 
-	//run each program
+	//run each program 	and wait until they are all done
 	launchProgramgs(argList);
-
-	//wait until they are all done
 
 	//free
 	destroyCommandList(argList);
