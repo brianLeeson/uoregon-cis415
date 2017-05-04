@@ -1,17 +1,19 @@
-OBJECTS = p1fxns.o uspsv1.o
+OBJECTS = p1fxns.o uspsv2.o
 CFLAGS = -std=c99 -W -Wall -g
 CC = gcc
 PROG_NAME = usps
 ARGS = --quantum=1234 workload_file.txt
 
-test: uspsv1 cpu io
+test: current
 	./$(PROG_NAME) $(ARGS)
 
-sense: uspsv1 cpu io
+sense: current
 	gdb ./$(PROG_NAME) 
 
-waterproof: uspsv1 cpu io
+waterproof: current
 	(valgrind --leak-check=full -v ./$(PROG_NAME)) || true
+
+current: uspsv2 cpu io
 
 uspsv1: $(OBJECTS) 
 	$(CC) $(OBJECTS) -o $(PROG_NAME)
@@ -35,9 +37,12 @@ p1fxns.o: p1fxns.c p1fxns.h
 
 uspsv1.o: uspsv1.c
 
+uspsv2.o: uspsv2.c
+
 cpubound.o: cpubound.c
 
 iobound.o: iobound.c 
 
 clean:
 	rm $(PROG_NAME)
+	rm *.o
