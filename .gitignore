@@ -7,4 +7,4 @@ usps
 cpubound
 iobound
 log.txt
-
+*.out

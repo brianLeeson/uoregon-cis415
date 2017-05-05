@@ -5,7 +5,7 @@
  *      Author: brian
  */
 
-
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -231,6 +231,22 @@ CommandList* getWorkload(int argc, char *argv[]){
 	return commandList;
 }
 
+
+void foo(){
+	FILE *f = fopen("file.txt", "a");
+	if (f == NULL){
+	    printf("Error opening file!\n");
+	    exit(1);
+	}
+
+	/* print some text */
+	const char *text = "BAR";
+	fprintf(f, "Some text: %s\n", text);
+
+	fclose(f);
+
+}
+
 void launchPrograms(CommandList *argList){
 	/*
 	 * function takes a commandlist that represents all programs to execute.
@@ -249,17 +265,16 @@ void launchPrograms(CommandList *argList){
 	}
 
 	int i;
+	int sig;
+	sigset_t signal_set;
+	sigaddset(&signal_set, SIGUSR1);
 	for(i=0; i < numprograms; i++){
-		pidList[i] = fork();
-		if (pidList[i] == 0){
+		if ((pidList[i] = fork()) == 0){
 			char *prog = command->cmd;
 			char **args = command->args;
 
-			int sig;
-			sigset_t signal_set;
-			sigaddset(&signal_set, SIGUSR1);
+			signal(SIGUSR1, foo);
 			sigwait(&signal_set, &sig);
-			puts("done waiting");
 			execvp(prog, args);
 
 			//if illegal program or unallowed program
@@ -269,8 +284,9 @@ void launchPrograms(CommandList *argList){
 		command = command->next;
 	}
 	for(i=0; i < numprograms; i++){
-		printf("pid is %d\n", pidList[i]);
-		waitpid(pidList[i],0 ,0 );
+		printf("killing pid: %d\n", pidList[i]);
+		kill(pidList[i], SIGUSR1);
+		waitpid(pidList[i], 0 ,0);
 	}
 
 	//dealloc pidList
@@ -278,7 +294,7 @@ void launchPrograms(CommandList *argList){
 }
 
 int main(int argc, char *argv[]){
-
+	foo();
 	//get quantum
 	int quantum;
 	if ((quantum = getQuantum(argc, argv)) < 0){

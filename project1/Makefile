@@ -1,5 +1,5 @@
 OBJECTS = p1fxns.o uspsv2.o
-CFLAGS = -std=c99 -W -Wall -g
+CFLAGS = -W -Wall -g
 CC = gcc
 PROG_NAME = usps
 ARGS = --quantum=1234 workload_file.txt
