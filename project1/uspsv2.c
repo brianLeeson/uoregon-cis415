@@ -17,11 +17,15 @@
 #include "p1fxns.h"
 
 #define BUFFSIZE 256
+#define UNUSED __attribute__((unused))
+int USR1_received = 0;
 
 typedef struct command{
 	struct command *next;
 	char *cmd;
 	char **args;
+	int pid;
+	int returnVlaue;
 }Command;
 
 //Linked List
@@ -247,8 +251,9 @@ void foo(){
 
 }
 
-void onusr1(){
+void onusr1(UNUSED int sig){
 	puts("got sig");
+	USR1_received++;
 }
 
 int *forkPrograms(CommandList *argList){
@@ -271,14 +276,18 @@ int *forkPrograms(CommandList *argList){
 	//set sigusr1 handler
     if (signal(SIGUSR1, onusr1) == SIG_ERR) {
         fprintf(stderr, "Can't establish SIGUSR1 handler\n");
-        return 1;
+        return NULL;
     }
 
 	//start children
 	int i;
 	for(i=0; i < numPrograms; i++){
 		if ((pidList[i] = fork()) == 0){
-
+			//wait for sigusr1
+			while (! USR1_received){
+				puts("child pausing");
+				pause();
+			}
 
 			char *prog = command->cmd;
 			char **args = command->args;
@@ -294,17 +303,43 @@ int *forkPrograms(CommandList *argList){
 	return pidList;
 }
 
-void waitPrograms(int *pidList, int numPrograms){
+void startPrograms(int *pidList, int numPrograms){
+	//function sends USR1 sig to all children
 	int i;
 	for(i=0; i < numPrograms; i++){
-		printf("killing pid: %d\n", pidList[i]);
-		//kill(pidList[i], SIGUSR1);
+		printf("starting pid: %d\n", pidList[i]);
+		kill(pidList[i], SIGUSR1);
+	}
+}
+
+void suspendPrograms(int *pidList, int numPrograms){
+	//function suspends all programs
+	int i;
+	for(i=0; i < numPrograms; i++){
+		printf("suspending pid: %d\n", pidList[i]);
+		kill(pidList[i], SIGSTOP);
+	}
+}
+
+void continuePrograms(int *pidList, int numPrograms){
+	//function continues all programs
+	int i;
+	for(i=0; i < numPrograms; i++){
+		printf("continuing pid: %d\n", pidList[i]);
+		kill(pidList[i], SIGCONT);
+	}
+}
+
+void waitForPrograms(int *pidList, int numPrograms){
+	//function waits until all programs have completed
+	int i;
+	for(i=0; i < numPrograms; i++){
+		printf("waiting on pid: %d\n", pidList[i]);
 		waitpid(pidList[i], 0 ,0);
 	}
 }
 
 int main(int argc, char *argv[]){
-	foo();
 	//get quantum
 	int quantum;
 	if ((quantum = getQuantum(argc, argv)) < 0){
@@ -320,7 +355,17 @@ int main(int argc, char *argv[]){
 	int * pidList;
 	pidList = forkPrograms(argList);
 
-	waitPrograms(pidList, numPrograms);
+	//start programs
+	startPrograms(pidList, numPrograms);
+
+	//suspend programs
+	suspendPrograms(pidList, numPrograms);
+
+	//continue programs
+	continuePrograms(pidList, numPrograms);
+
+	//wait for programs
+	waitForPrograms(pidList, numPrograms);
 
 	//free
 	destroyCommandList(argList);

@@ -1,5 +1,5 @@
 echo this
-sleep 10
+sleep 1
 date
-sleep 10
+sleep 1
 an_illegal_program
