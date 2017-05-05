@@ -247,34 +247,28 @@ void foo(){
 
 }
 
-void launchPrograms(CommandList *argList){
+int *launchPrograms(CommandList *argList){
 	/*
 	 * function takes a commandlist that represents all programs to execute.
 	 * calls all programs in the argslist
 	 */
 	int *pidList;
-	int numprograms = argList->numCommands;
+	int numPrograms = argList->numCommands;
 
 	//get command, skip dummy
 	Command *command = argList->start->next;
 
 	//malloc for pidList
-	pidList = (int *) malloc(numprograms * sizeof(int));
+	pidList = (int *) malloc(numPrograms * sizeof(int));
 	if (pidList == NULL){
 		exit(1); //TODO: make proper
 	}
 
 	int i;
-	int sig;
-	sigset_t signal_set;
-	sigaddset(&signal_set, SIGUSR1);
-	for(i=0; i < numprograms; i++){
+	for(i=0; i < numPrograms; i++){
 		if ((pidList[i] = fork()) == 0){
 			char *prog = command->cmd;
 			char **args = command->args;
-
-			signal(SIGUSR1, foo);
-			sigwait(&signal_set, &sig);
 			execvp(prog, args);
 
 			//if illegal program or unallowed program
@@ -283,14 +277,17 @@ void launchPrograms(CommandList *argList){
 		}
 		command = command->next;
 	}
-	for(i=0; i < numprograms; i++){
+
+	return pidList;
+}
+
+void waitPrograms(int *pidList, int numPrograms){
+	int i;
+	for(i=0; i < numPrograms; i++){
 		printf("killing pid: %d\n", pidList[i]);
-		kill(pidList[i], SIGUSR1);
+		//kill(pidList[i], SIGUSR1);
 		waitpid(pidList[i], 0 ,0);
 	}
-
-	//dealloc pidList
-	free(pidList);
 }
 
 int main(int argc, char *argv[]){
@@ -304,12 +301,19 @@ int main(int argc, char *argv[]){
 
 	//command array from commandline or stdin
 	CommandList *argList = getWorkload(argc, argv);
+	int numPrograms = argList->numCommands;
 
 	//run each program 	and wait until they are all done
-	launchPrograms(argList);
+	int * pidList;
+	pidList = launchPrograms(argList);
+
+	waitPrograms(pidList, numPrograms);
 
 	//free
 	destroyCommandList(argList);
+
+	//dealloc pidList
+	free(pidList);
 
 	//exit when done
 	exit(0);
