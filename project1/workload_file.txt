@@ -1,5 +1,5 @@
-echo this
-sleep 1
-date
-sleep 1
-an_illegal_program
+echo thread 1 
+echo thread 2
+echo thread 3
+echo thread 4
+echo thread 5

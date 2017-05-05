@@ -18,7 +18,7 @@
 
 #define BUFFSIZE 256
 #define UNUSED __attribute__((unused))
-int USR1_received = 0;
+volatile int USR1_received = 0;
 
 typedef struct command{
 	struct command *next;
@@ -235,25 +235,12 @@ CommandList* getWorkload(int argc, char *argv[]){
 	return commandList;
 }
 
-
-void foo(){
-	FILE *f = fopen("file.txt", "a");
-	if (f == NULL){
-	    printf("Error opening file!\n");
-	    exit(1);
-	}
-
-	/* print some text */
-	const char *text = "BAR";
-	fprintf(f, "Some text: %s\n", text);
-
-	fclose(f);
-
-}
-
 void onusr1(UNUSED int sig){
-	puts("got sig");
-	USR1_received++;
+	//this function handles all signals that are send to our process.
+	//except sigstop and sigcont
+	if (sig == SIGUSR1){
+		USR1_received++;
+	}
 }
 
 int *forkPrograms(CommandList *argList){
@@ -282,10 +269,17 @@ int *forkPrograms(CommandList *argList){
 	//start children
 	int i;
 	for(i=0; i < numPrograms; i++){
-		if ((pidList[i] = fork()) == 0){
+		pidList[i] = fork();
+		if (pidList[i] == 0){
 			//wait for sigusr1
 			while (! USR1_received){
-				puts("child pausing");
+				/*
+				 * race condition
+				 * sometimes we pass the while condition
+				 * context switch out
+				 * parents sends a bunch of signals
+				 * then child pauses forever
+				 */
 				pause();
 			}
 
