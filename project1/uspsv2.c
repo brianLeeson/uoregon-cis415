@@ -247,7 +247,11 @@ void foo(){
 
 }
 
-int *launchPrograms(CommandList *argList){
+void onusr1(){
+	puts("got sig");
+}
+
+int *forkPrograms(CommandList *argList){
 	/*
 	 * function takes a commandlist that represents all programs to execute.
 	 * calls all programs in the argslist
@@ -264,9 +268,18 @@ int *launchPrograms(CommandList *argList){
 		exit(1); //TODO: make proper
 	}
 
+	//set sigusr1 handler
+    if (signal(SIGUSR1, onusr1) == SIG_ERR) {
+        fprintf(stderr, "Can't establish SIGUSR1 handler\n");
+        return 1;
+    }
+
+	//start children
 	int i;
 	for(i=0; i < numPrograms; i++){
 		if ((pidList[i] = fork()) == 0){
+
+
 			char *prog = command->cmd;
 			char **args = command->args;
 			execvp(prog, args);
@@ -305,7 +318,7 @@ int main(int argc, char *argv[]){
 
 	//run each program 	and wait until they are all done
 	int * pidList;
-	pidList = launchPrograms(argList);
+	pidList = forkPrograms(argList);
 
 	waitPrograms(pidList, numPrograms);
 

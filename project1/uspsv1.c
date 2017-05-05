@@ -222,7 +222,7 @@ CommandList* getWorkload(int argc, char *argv[]){
 	return commandList;
 }
 
-void launchPrograms(CommandList *argList){
+void forkPrograms(CommandList *argList){
 	/*
 	 * function takes a commandlist that represents all programs to execute.
 	 * calls all programs in the argslist
@@ -274,7 +274,7 @@ int main(int argc, char *argv[]){
 	CommandList *argList = getWorkload(argc, argv);
 
 	//run each program 	and wait until they are all done
-	launchPrograms(argList);
+	forkPrograms(argList);
 
 	//free
 	destroyCommandList(argList);
