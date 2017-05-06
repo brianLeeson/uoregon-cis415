@@ -383,8 +383,9 @@ static void onchild(UNUSED int sig){
 
 			//iterate through processList and set process status of pid to 0.
 			puts("----------iterating");
-			Process *cur = processList->start->next->next;
+			Process *cur = processList->start->next;
 			while(cur != NULL){
+				printf("%d\n", cur->pid);
 				if (cur->pid == pid){
 					puts("-------status to 0");
 					cur->status = 0;
