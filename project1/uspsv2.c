@@ -3,6 +3,12 @@
  *
  *  Created on: Apr 28, 2017
  *      Author: brian
+ *      ID: bel
+ *      CIS 415 Project 1
+ *
+ *      This is my own work except Holden Marsh, Sam Oberg, and I
+ *      talked out loud about C syntax, data structures, and some function calls.
+ *      Additionally we help think about specific bugs that caused race conditions.
  */
 
 #include <stdio.h>
@@ -14,6 +20,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <time.h>
 #include "p1fxns.h"
 
 #define BUFFSIZE 256
@@ -24,8 +31,6 @@ typedef struct command{
 	struct command *next;
 	char *cmd;
 	char **args;
-	int pid;
-	int returnVlaue;
 }Command;
 
 //Linked List
@@ -268,6 +273,7 @@ int *forkPrograms(CommandList *argList){
 
 	//start children
 	int i;
+	struct timespec tm = {0, 20000000};
 	for(i=0; i < numPrograms; i++){
 		pidList[i] = fork();
 		if (pidList[i] == 0){
@@ -280,7 +286,7 @@ int *forkPrograms(CommandList *argList){
 				 * parents sends a bunch of signals
 				 * then child pauses forever
 				 */
-				pause();
+				 (void)nanosleep(&tm, NULL);
 			}
 
 			char *prog = command->cmd;
