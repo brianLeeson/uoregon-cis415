@@ -1,4 +1,4 @@
-OBJECTS = p1fxns.o uspsv2.o
+OBJECTS = p1fxns.o uspsv3.o
 CFLAGS = -W -Wall -g
 CC = gcc
 PROG_NAME = usps
@@ -13,7 +13,7 @@ sense: current
 waterproof: current
 	(valgrind --leak-check=full -v ./$(PROG_NAME)) || true
 
-current: uspsv2 cpu io
+current: uspsv3 cpu io
 
 uspsv1: $(OBJECTS) 
 	$(CC) $(OBJECTS) -o $(PROG_NAME)
@@ -38,6 +38,8 @@ p1fxns.o: p1fxns.c p1fxns.h
 uspsv1.o: uspsv1.c
 
 uspsv2.o: uspsv2.c
+
+uspsv3.o: uspsv3.c
 
 cpubound.o: cpubound.c
 

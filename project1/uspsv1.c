@@ -1,3 +1,15 @@
+/*
+ * uspsv1.c
+ *
+ *  Created on: Apr 28, 2017
+ *      Author: brian
+ *      ID: bel
+ *      CIS 415 Project 1
+ *
+ *      This is my own work except Holden Marsh, Sam Oberg, and I
+ *      talked out loud about C syntax, data structures, and some function calls.
+ */
+
 #include "p1fxns.h"
 #include <stdlib.h>
 #include <string.h>
