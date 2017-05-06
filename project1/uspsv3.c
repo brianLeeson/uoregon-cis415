@@ -7,7 +7,7 @@
  *      CIS 415 Project 1
  *
  *      This is my own work except Sam Oberg and I
- *      talked out loud about C syntax, data structures, and some function calls.
+ *      talked out loud about C syntax, data structures, and some function calls. Help with onchld handler as well
  *      ADT Queue based off of: https://github.com/rkwan/adt/blob/master/queue/queue.c
  *
  */
@@ -52,6 +52,9 @@ typedef struct processList{
 	Process *start;
 	int numCommands; //this does not include dummy
 }ProcessList;
+
+
+ProcessList *processList;
 
 /* ----- QUEUE ----- */
 
@@ -339,37 +342,59 @@ static void onusr1(UNUSED int sig){
 		case(SIGUSR1):
 			USR1_received++;
 			break;
-		case(SIGALRM):
-			puts("received SIGALRM");
+		default:
+			break;
 	}
 }
 
 static void onalrm(UNUSED int sig) {
-	puts("Alarm received");
+	//puts("Alarm received");
 	//on alarm called periodically based on quantum. does the scheduling work
-	//pQueue is global
 
 	//stop curProc
-
+	kill(curProc->pid, SIGSTOP);
 	enqueue(curProc);
 
 	//find next ready process
 	do{
 		puts("dequeuing new curProc");
 		curProc = dequeue();
+
 	}while(!isQueueEmpty() && (curProc->status == 0));
 
+	printf("pid is: %d\n", curProc->pid);
 
-
-
+	if (curProc->status == 2){
+		kill(curProc->pid, SIGUSR1);
+	}
+	else if(curProc->status == 1){
+		kill(curProc->pid, SIGCONT);
+	}
 }
 
 static void onchild(UNUSED int sig){
 	//set status to 0
+	pid_t pid;
+	int status;
 
+	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+		if (WIFEXITED(status) || WIFSIGNALED(status)) {
+			processesAlive--;
 
-	printf("process finished.\n");
-	processesAlive--;
+			//iterate through processList and set process status of pid to 0.
+			puts("----------iterating");
+			Process *cur = processList->start->next->next;
+			while(cur != NULL){
+				if (cur->pid == pid){
+					puts("-------status to 0");
+					cur->status = 0;
+					break;
+				}
+				cur = cur->next;
+			}
+			fprintf(stderr, "%d: process finished\n", pid);
+		}
+	}
 }
 
 void setSignalHandlers(){
@@ -459,7 +484,7 @@ int main(int argc, char *argv[]){
 	}
 
 	//make process array from commandline or stdin
-	ProcessList *processList = getWorkload(argc, argv);
+	processList = getWorkload(argc, argv);
 	int numProcesses = processList->numCommands;
 
 	int * pidList; //TODO: remove
@@ -492,6 +517,8 @@ int main(int argc, char *argv[]){
 
 	//delete queue
 	deleteQueue();
+
+	printf("processes alive %d\n", processesAlive);
 
 	//exit when done
 	exit(0);

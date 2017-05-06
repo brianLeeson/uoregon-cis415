@@ -3,3 +3,8 @@ echo thread 2
 echo thread 3
 echo thread 4
 echo thread 5
+sleep 2
+sleep 1
+sleep 1
+sleep 1
+sleep 1

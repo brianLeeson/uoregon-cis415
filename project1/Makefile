@@ -2,7 +2,7 @@ OBJECTS = p1fxns.o uspsv3.o
 CFLAGS = -W -Wall -g
 CC = gcc
 PROG_NAME = usps
-ARGS = --quantum=1234 workload_file.txt
+ARGS = --quantum=1000 workload_file.txt
 
 test: current
 	./$(PROG_NAME) $(ARGS)
