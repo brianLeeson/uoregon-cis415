@@ -279,13 +279,6 @@ int *forkPrograms(CommandList *argList){
 		if (pidList[i] == 0){
 			//wait for sigusr1
 			while (! USR1_received){
-				/*
-				 * race condition
-				 * sometimes we pass the while condition
-				 * context switch out
-				 * parents sends a bunch of signals
-				 * then child pauses forever
-				 */
 				 (void)nanosleep(&tm, NULL);
 			}
 
