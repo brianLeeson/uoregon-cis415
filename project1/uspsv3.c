@@ -29,21 +29,23 @@
 #define UNUSED __attribute__((unused))
 struct q;
 typedef struct q Queue;
+typedef struct process Process;
 
 
 volatile int USR1_received = 0;
 volatile int processesAlive = 0;
+Process *curProc;
 
 //make Global queue
 Queue *pQueue;
 
-typedef struct process{
+struct process{
 	struct process *next;
 	char *cmd;
 	char **args;
 	int pid;
 	int status;
-}Process;
+};
 
 //Linked List
 typedef struct processList{
@@ -238,7 +240,7 @@ void setCommandList(int fd, ProcessList *commandList){
 	//make dummy first Command
 	prevCommand = createCommand(0);
 	if (prevCommand == NULL){
-		exit(1); //TODO make proper
+		exit(1);
 	}
 	commandList->start = prevCommand;
 
@@ -288,6 +290,7 @@ void setCommandList(int fd, ProcessList *commandList){
 	if (commandList->start != NULL){
 		prevCommand->next = NULL;  //redundant?
 	}
+
 }
 
 ProcessList* getWorkload(int argc, char *argv[]){
@@ -311,7 +314,7 @@ ProcessList* getWorkload(int argc, char *argv[]){
 
 	ProcessList *commandList = createCommandList();
 	if (commandList == NULL){
-		exit(1); //TODO make proper
+		exit(1);
 	}
 
 	// if filename in argv
@@ -342,13 +345,30 @@ static void onusr1(UNUSED int sig){
 }
 
 static void onalrm(UNUSED int sig) {
+	puts("Alarm received");
 	//on alarm called periodically based on quantum. does the scheduling work
 	//pQueue is global
 
+	//stop curProc
+
+	enqueue(curProc);
+
+	//find next ready process
+	do{
+		puts("dequeuing new curProc");
+		curProc = dequeue();
+	}while(!isQueueEmpty() && (curProc->status == 0));
 
 
 
-	printf("process was killed.\n");
+
+}
+
+static void onchild(UNUSED int sig){
+	//set status to 0
+
+
+	printf("process finished.\n");
 	processesAlive--;
 }
 
@@ -360,6 +380,10 @@ void setSignalHandlers(){
     }
     if (signal(SIGALRM, onalrm) == SIG_ERR) {
         fprintf(stderr, "Can't establish SIGALRM handler\n");
+        exit(1);
+    }
+    if (signal(SIGCHLD, onchild) == SIG_ERR) {
+        fprintf(stderr, "Can't establish SIGCHLD handler\n");
         exit(1);
     }
 }
@@ -438,8 +462,7 @@ int main(int argc, char *argv[]){
 	ProcessList *processList = getWorkload(argc, argv);
 	int numProcesses = processList->numCommands;
 
-	//run each program 	and wait until they are all done
-	int * pidList;
+	int * pidList; //TODO: remove
 
 	//set sig handlers
 	setSignalHandlers();
@@ -451,6 +474,11 @@ int main(int argc, char *argv[]){
 	setTimer(quantum);
 
 	processesAlive = numProcesses;
+
+	//start first process
+	puts("starting first process");
+	curProc = dequeue();
+	kill(curProc->pid, SIGUSR1);
 
 	while (processesAlive){
 		pause();
