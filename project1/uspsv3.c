@@ -8,8 +8,11 @@
  *
  *      This is my own work except Sam Oberg and I
  *      talked out loud about C syntax, data structures, and some function calls.
+ *      ADT Queue based off of: https://github.com/rkwan/adt/blob/master/queue/queue.c
+ *
  */
 
+#include <time.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,11 +27,15 @@
 
 #define BUFFSIZE 256
 #define UNUSED __attribute__((unused))
-#define NALARMS 10
-#define INTERVAL 500
+struct q;
+typedef struct q Queue;
+
 
 volatile int USR1_received = 0;
-int alarms_left = NALARMS;
+volatile int processesAlive = 0;
+
+//make Global queue
+Queue *pQueue;
 
 typedef struct process{
 	struct process *next;
@@ -44,24 +51,95 @@ typedef struct processList{
 	int numCommands; //this does not include dummy
 }ProcessList;
 
+/* ----- QUEUE ----- */
+
+typedef struct pNode {
+        Process *process;
+        struct pNode *next;
+} ProcessNode;
+
+struct q {
+	ProcessNode *head;
+	ProcessNode *tail;
+};
+
+void queueInit() {
+	//initializes global pQueue
+	pQueue = malloc(sizeof(Queue));
+	if (pQueue == NULL) {
+		p1perror(2, "Error: queueInit(): failed to malloc");
+		exit(1);
+	}
+	pQueue->head = NULL;
+	pQueue->tail = NULL;
+}
+
+void enqueue(Process *p) {
+	//enqueue to global pQueue
+	ProcessNode *newNode = malloc(sizeof(ProcessNode));
+	if (newNode == NULL) {
+		p1perror(2, "Error: enqueue(): failed to malloc");
+		exit(1);
+	}
+	newNode->process = p;
+	newNode->next = NULL;
+	if (pQueue->head == NULL) {
+		pQueue->head = newNode;
+		pQueue->tail = newNode;
+	}else {
+		pQueue->tail->next = newNode;
+		pQueue->tail = newNode;
+	}
+}
+
+Process *dequeue() {
+	if (pQueue->head == NULL) {
+		p1perror(2, "Error: dequeue(): failed to malloc");
+		exit(1);
+	}
+	Process *ret = pQueue->head->process;
+	ProcessNode *tmp = pQueue->head;
+	pQueue->head = pQueue->head->next;
+	tmp->next = NULL;
+	free(tmp);
+	return ret;
+}
+
+unsigned int isQueueEmpty(){
+	if (pQueue->head == NULL){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+
+void deleteQueue() {
+        while(!isQueueEmpty()) {
+                dequeue();
+        }
+        free(pQueue);
+}
+
+/* ----- Functions ----- */
 
 Process *createCommand(int numArgs){
-	Process *commandStruct = (Process *)malloc(sizeof(Process));
+	Process *processStruct = (Process *)malloc(sizeof(Process));
 
-	if (commandStruct != NULL){
-		commandStruct->args = (char **) malloc((numArgs+1) * sizeof(char *));
+	if (processStruct != NULL){
+		processStruct->args = (char **) malloc((numArgs+1) * sizeof(char *));
 
-		if (commandStruct->args == NULL){
-			free(commandStruct);
-			return commandStruct = NULL;
+		if (processStruct->args == NULL){
+			free(processStruct);
+			return processStruct = NULL;
 		}
-		commandStruct->cmd = NULL;
-		commandStruct->next = NULL;
-		commandStruct->pid = -1; //no pid yet;
-		commandStruct->status = 0; //no status yet
+		processStruct->cmd = NULL;
+		processStruct->next = NULL;
+		processStruct->pid = -1; //no pid yet;
+		processStruct->status = 2; //2: waiting for usr1, 1, for cont, 0 it's dead jim.
 	}
 
-	return commandStruct;
+	return processStruct;
 }
 
 void destroyCommand(Process *command){
@@ -178,6 +256,10 @@ void setCommandList(int fd, ProcessList *commandList){
 			numArgs++;
 		}
 		currCommand = createCommand(numArgs);
+
+		//add currCommand to queue
+		enqueue(currCommand);
+
 		if (currCommand == NULL){
 			exit(1); //TODO make proper
 		}
@@ -260,8 +342,14 @@ static void onusr1(UNUSED int sig){
 }
 
 static void onalrm(UNUSED int sig) {
-	printf("Timer went off.\n");
-	alarms_left--;
+	//on alarm called periodically based on quantum. does the scheduling work
+	//pQueue is global
+
+
+
+
+	printf("process was killed.\n");
+	processesAlive--;
 }
 
 void setSignalHandlers(){
@@ -282,10 +370,10 @@ int *forkPrograms(ProcessList *processList){
 	 * calls all programs in the argslist
 	 */
 	int *pidList;
-	int numPrograms = argList->numCommands;
+	int numPrograms = processList->numCommands;
 
 	//get command, skip dummy
-	Process *command = argList->start->next;
+	Process *command = processList->start->next;
 
 	//malloc for pidList
 	pidList = (int *) malloc(numPrograms * sizeof(int));
@@ -325,7 +413,20 @@ int *forkPrograms(ProcessList *processList){
 	return pidList;
 }
 
+void setTimer(int quantum){
+	struct itimerval it_val;
+	it_val.it_value.tv_sec = quantum/1000;
+	it_val.it_value.tv_usec = (quantum*1000) % 1000000;
+	it_val.it_interval = it_val.it_value;
+	if (setitimer(ITIMER_REAL, &it_val, NULL) == -1) {
+		perror("error calling setitimer()");
+		exit(1);
+	}
+}
+
 int main(int argc, char *argv[]){
+	queueInit();
+
 	//get quantum
 	int quantum;
 	if ((quantum = getQuantum(argc, argv)) < 0){
@@ -333,26 +434,25 @@ int main(int argc, char *argv[]){
 		exit(1);
 	}
 
-	//command array from commandline or stdin
+	//make process array from commandline or stdin
 	ProcessList *processList = getWorkload(argc, argv);
-	int numPrograms = processList->numCommands;
+	int numProcesses = processList->numCommands;
 
 	//run each program 	and wait until they are all done
 	int * pidList;
 
+	//set sig handlers
 	setSignalHandlers();
 
+	//create children, return list of children
 	pidList = forkPrograms(processList);
 
-	struct itimerval it_val;
-	it_val.it_value.tv_sec = quantum/1000;
-	it_val.it_value.tv_usec = (quantum*1000) % 1000000;
-	it_val.it_interval = it_val.it_value;
-	if (setitimer(ITIMER_REAL, &it_val, NULL) == -1) {
-		perror("error calling setitimer()");
-		return 1;
-	}
-	while (alarms_left){
+	//set timer base on quantum
+	setTimer(quantum);
+
+	processesAlive = numProcesses;
+
+	while (processesAlive){
 		pause();
 	}
 
@@ -361,6 +461,9 @@ int main(int argc, char *argv[]){
 
 	//dealloc pidList
 	free(pidList);
+
+	//delete queue
+	deleteQueue();
 
 	//exit when done
 	exit(0);
