@@ -32,7 +32,6 @@ typedef struct process Process;
 
 volatile int USR1_received = 0;
 
-Process *curProc;
 int *pidList;
 
 //make Global queue
@@ -46,12 +45,6 @@ struct process{
 	int status;
 	int numArgs;
 };
-
-//Linked List
-typedef struct processList{
-	Process *start;
-	int numProcesss; //this does not include dummy
-}ProcessList;
 
 Process *createProcess(int numArgs){
 	Process *processStruct = (Process *)malloc(sizeof(Process));
@@ -279,8 +272,7 @@ void getWorkload(int argc, char *argv[]){
 }
 
 void onusr1(UNUSED int sig){
-	//this function handles all signals that are send to our process.
-	//except sigstop and sigcont
+	//this function handles usr1 signals that are sent to our process.
 	if (sig == SIGUSR1){
 		USR1_received++;
 	}

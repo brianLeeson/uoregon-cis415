@@ -40,21 +40,47 @@ int *pidList;
 Queue *pQueue;
 
 struct process{
-	struct process *next;
 	char *cmd;
 	char **args;
 	int pid;
 	int status;
+	int numArgs;
 };
 
-//Linked List
-typedef struct processList{
-	Process *start;
-	int numCommands; //this does not include dummy
-}ProcessList;
 
+Process *createProcess(int numArgs){
+	Process *processStruct = (Process *)malloc(sizeof(Process));
 
-ProcessList *processList;
+	if (processStruct != NULL){
+		processStruct->args = (char **) malloc((numArgs+1) * sizeof(char *));
+
+		if (processStruct->args == NULL){
+			free(processStruct);
+			return processStruct = NULL;
+		}
+		processStruct->numArgs = numArgs;
+		processStruct->cmd = NULL;
+	}
+
+	return processStruct;
+}
+
+void destroyProcess(Process *p){
+	//free cmd
+	free(p->cmd);
+
+	//free args
+	int i = 0;
+	char *arg;
+	while(i <= p->numArgs){
+		arg = p->args[i++];
+		free(arg);
+	}
+	free(p->args);
+
+	//free struct
+	free(p);
+}
 
 /* ----- QUEUE ----- */
 
@@ -64,6 +90,7 @@ typedef struct pNode {
 } ProcessNode;
 
 struct q {
+	int initialSize;
 	ProcessNode *head;
 	ProcessNode *tail;
 };
@@ -75,6 +102,7 @@ void queueInit() {
 		p1perror(2, "Error: queueInit(): failed to malloc");
 		exit(1);
 	}
+	pQueue->initialSize = 0;
 	pQueue->head = NULL;
 	pQueue->tail = NULL;
 }
@@ -120,83 +148,15 @@ unsigned int isQueueEmpty(){
 }
 
 void deleteQueue() {
-	int i = 0;
 	while(!isQueueEmpty()) {
-		dequeue();
-		i++;
+		destroyProcess(dequeue());
 	}
 	free(pQueue);
 	pQueue = NULL;
 }
 
+
 /* ----- Functions ----- */
-
-Process *createProcess(int numArgs){
-	Process *processStruct = (Process *)malloc(sizeof(Process));
-
-	if (processStruct != NULL){
-		processStruct->args = (char **) malloc((numArgs+1) * sizeof(char *));
-
-		if (processStruct->args == NULL){
-			free(processStruct);
-			return processStruct = NULL;
-		}
-		processStruct->cmd = NULL;
-		processStruct->next = NULL;
-		processStruct->pid = -1; //no pid yet;
-		processStruct->status = 2; //2: waiting for usr1, 1, for cont, 0 it's dead jim.
-	}
-
-	return processStruct;
-}
-
-void destroyProcess(Process *p){
-	//free cmd
-	free(p->cmd);
-
-	//free args
-	int i = 0;
-	char *arg;
-	while((arg = p->args[i++]) != NULL){
-		free(arg);
-	}
-	//free struct
-	free(p);
-}
-
-ProcessList *createProcessList(){
-	ProcessList *processListStruct = (ProcessList *)malloc(sizeof(ProcessList));
-
-	if (processListStruct != NULL){
-		processListStruct->start = NULL;
-		processListStruct->numCommands = 0;
-	}
-	return processListStruct;
-}
-
-void destroyProcessList(ProcessList *processList){
-	// free commands
-	Process *current;
-	if ((current = processList->start) != NULL){
-		Process *next;
-
-		//free dummy command struct
-		next = current->next;
-		free(current);
-		current = next;
-
-		//while more command structs to free
-		while (current != NULL){
-			//free current
-			next = current->next;
-			destroyProcess(current);
-			current = next;
-		}
-	}
-
-	// free CommandList
-	free(processList);
-}
 
 void stripNewLine(char word[]){
 	int i = 0;
@@ -236,18 +196,10 @@ int getQuantum(int argc, char *argv[]){
 	return quantum;
 }
 
-void setCommandList(int fd, ProcessList *commandList){
+void setupQueue(int fd){
 	int n;
 	char buff[BUFFSIZE];
-	Process *prevCommand = NULL;
-	Process *currCommand = NULL;
-
-	//make dummy first Command
-	prevCommand = createProcess(0);
-	if (prevCommand == NULL){
-		exit(1);
-	}
-	commandList->start = prevCommand;
+	Process *currProcess = NULL;
 
 	//while lines remaining in workfile
 	while((n = p1getline(fd, buff, sizeof(buff))) > 0){
@@ -262,13 +214,9 @@ void setCommandList(int fd, ProcessList *commandList){
 		while ((i = p1getword(tempBuff, i, wordBuff)) > 0){
 			numArgs++;
 		}
-		currCommand = createProcess(numArgs);
-
-		//add currCommand to queue
-		enqueue(currCommand);
-
-		if (currCommand == NULL){
-			exit(1); //TODO make proper
+		currProcess = createProcess(numArgs);
+		if (currProcess == NULL){
+			exit(1);
 		}
 
 		char word[100]; //assume no arg is more than 99 chars long
@@ -277,35 +225,28 @@ void setCommandList(int fd, ProcessList *commandList){
 		//get command
 		p1getword(buff, 0, word);
 		stripNewLine(word);
-		currCommand->cmd = p1strdup(word);
+		currProcess->cmd = p1strdup(word);
 
 		//get args
 		int index = 0;
 		while ((j = p1getword(buff, j, word)) > 0){
 			stripNewLine(word);
-			currCommand->args[index++] = p1strdup(word);
+			currProcess->args[index++] = p1strdup(word);
 		}
-		currCommand->args[index] = NULL;
+		currProcess->args[index] = NULL;
 
-		prevCommand->next = currCommand;
-		prevCommand = currCommand;
-		commandList->numCommands++;
+		pQueue->initialSize++;
+		enqueue(currProcess);
 	}
-	//prevCommand is last struct of linked list
-	if (commandList->start != NULL){
-		prevCommand->next = NULL;  //redundant?
-	}
-
 }
 
-ProcessList* getWorkload(int argc, char *argv[]){
+void getWorkload(int argc, char *argv[]){
 	/*
-	 * function takes arc and argv
+	 * function takes argc and argv
 	 * returns a linked list of command structs
 	 */
 	char* fileName = NULL;
 	int fd;
-
 
 	//check if file in argv
 	if(argc > 1){
@@ -317,29 +258,21 @@ ProcessList* getWorkload(int argc, char *argv[]){
 		}
 	}
 
-	ProcessList *commandList = createProcessList();
-	if (commandList == NULL){
-		exit(1);
-	}
-
 	// if filename in argv
 	if (fileName != NULL){
 		fd = open(fileName, 0);
-		setCommandList(fd, commandList);
+		setupQueue(fd);
 	}
 
 	//else read from stdin
 	else{
 		fd = 0;
-		setCommandList(fd, commandList);
+		setupQueue(fd);
 	}
-
-	return commandList;
 }
 
 static void onusr1(UNUSED int sig){
-	//this function handles all signals that are send to our process.
-	//except sigstop and sigcont
+	//this function handles usr1 signals that are sent to our process.
 	switch(sig){
 		case(SIGUSR1):
 			USR1_received++;
@@ -363,8 +296,8 @@ static void onalrm(UNUSED int sig) {
 	}while(!isQueueEmpty() && (curProc->status == 0));
 
 	if (curProc->status == 2){
-		kill(curProc->pid, SIGUSR1);
 		curProc->status = 1;
+		kill(curProc->pid, SIGUSR1);
 	}
 	else if(curProc->status == 1){
 		kill(curProc->pid, SIGCONT);
@@ -380,15 +313,21 @@ static void onchild(UNUSED int sig){
 		if (WIFEXITED(status) || WIFSIGNALED(status)) {
 			processesAlive--;
 
-			//iterate through processList and set process status of pid to 0.
-			Process *cur = processList->start->next;
-			while(cur != NULL){
-				if (cur->pid == pid){
-					cur->status = 0;
-					break;
-				}
-				cur = cur->next;
+			if(curProc->pid == pid ){
+				curProc->status = 0;
 			}
+			else{
+				//iterate through pQueue and set process status of pid to 0.
+				ProcessNode *cur = pQueue->head;
+				while(cur != NULL){
+					if (cur->process->pid == pid){
+						cur->process->status = 0;
+						break;
+					}
+					cur = cur->next;
+				}
+			}
+
 		}
 	}
 }
@@ -409,52 +348,40 @@ void setSignalHandlers(){
     }
 }
 
-int *forkPrograms(ProcessList *processList){
+int *forkPrograms(){
 	/*
-	 * function takes a processList that represents all programs to execute.
-	 * calls all programs in the argslist
+	 * calls all programs in the queue
 	 */
-	int *pidList;
-	int numPrograms = processList->numCommands;
-
-	//get command, skip dummy
-	Process *command = processList->start->next;
+	int numprograms = pQueue->initialSize;
 
 	//malloc for pidList
-	pidList = (int *) malloc(numPrograms * sizeof(int));
+	pidList = (int *) malloc(numprograms * sizeof(int));
 	if (pidList == NULL){
-		exit(1); //TODO: make proper
+		exit(1);
 	}
 
-	//start children
-	int i;
-	struct timespec tm = {0, 20000000};
-	for(i=0; i < numPrograms; i++){
+	int i = 0;
+	ProcessNode *cur = pQueue->head;
+	while(cur != NULL){
 		pidList[i] = fork();
-		if (pidList[i] == 0){
-			//wait for sigusr1
-			while (! USR1_received){
-				(void)nanosleep(&tm, NULL);
+			if (pidList[i] == 0){
+				char *prog = cur->process->cmd;
+				char **args = cur->process->args;
+				execvp(prog, args);
+
+				//if illegal program or unallowed program
+				p1perror(2, "execvp fail");
+				exit(1);
 			}
-
-			char *prog = command->cmd;
-			char **args = command->args;
-			execvp(prog, args);
-
-			//these lines execute if illegal program or unallowed program
-			p1perror(2, "execvp fail");
-			exit(1);
-		}
-		else if (pidList[i] > 0){
-			command->pid = pidList[i];
-		}
-		else{
-			//fork unsuccessful
-			exit(1);
-		}
-		command = command->next;
+		cur = cur->next;
+		i++;
 	}
 
+	for(i=0; i < numprograms; i++){
+		waitpid(pidList[i],0 ,0 );
+	}
+
+	//dealloc pidList
 	return pidList;
 }
 
@@ -482,20 +409,18 @@ int main(int argc, char *argv[]){
 	deleteQueue(); exit(1);
 
 	//make process array from commandline or stdin
-	processList = getWorkload(argc, argv);
-	int numProcesses = processList->numCommands;
+	getWorkload(argc, argv);
+	int numProcesses = pQueue->initialSize;
+	processesAlive = numProcesses;
 
 	//set sig handlers
 	setSignalHandlers();
 
 	//create children, return list of children
-	pidList = forkPrograms(processList);
+	forkPrograms();
 
 	//set timer base on quantum
 	setTimer(quantum);
-
-	processesAlive = numProcesses;
-
 
 	//start first process
 	curProc = dequeue();
@@ -505,9 +430,6 @@ int main(int argc, char *argv[]){
 	while (processesAlive){
 		(void)nanosleep(&tm, NULL);
 	}
-
-	//free
-	destroyProcessList(processList);
 
 	//dealloc pidList
 	free(pidList);

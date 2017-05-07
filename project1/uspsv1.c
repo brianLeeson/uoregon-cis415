@@ -44,12 +44,6 @@ struct process{
 	int numArgs;
 };
 
-//Linked List
-typedef struct processList{
-	Process *start;
-	int numProcesss; //this does not include dummy
-}ProcessList;
-
 Process *createProcess(int numArgs){
 	Process *processStruct = (Process *)malloc(sizeof(Process));
 
