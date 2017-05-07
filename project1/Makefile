@@ -11,7 +11,7 @@ sense: current
 	gdb ./$(PROG_NAME) 
 
 waterproof: current
-	(valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -v ./$(PROG_NAME)) || true
+	(valgrind --track-origins=yes -v ./$(PROG_NAME) $(ARGS)) || true
 
 current: uspsv3 cpu io
 

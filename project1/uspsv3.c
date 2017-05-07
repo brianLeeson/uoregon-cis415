@@ -216,7 +216,6 @@ int getQuantum(int argc, char *argv[]){
 	 * gets quantum from environment or command line with command line priority
 	 * returns quantum if exists or specified, -1 otherwise.
 	 */
-
 	char *p = NULL;
 	int quantum = -1;
 	char *argName = "--quantum=";
@@ -483,12 +482,12 @@ void setTimer(int quantum){
 
 int main(int argc, char *argv[]){
 	queueInit();
-	//deleteQueue(); return 0;
 
 	//get quantum
-	int quantum;
-	if ((quantum = getQuantum(argc, argv)) < 0){
-		puts("No quantum found or specified."); // TODO: remove?
+	int quantum = getQuantum(argc, argv);
+	printf("q is %d\n",quantum);
+	if (quantum< 0){
+		p1perror(2, "No quantum found or specified.");
 		exit(1);
 	}
 
@@ -517,7 +516,6 @@ int main(int argc, char *argv[]){
 	while (processesAlive){
 		(void)nanosleep(&tm, NULL);
 	}
-
 
 	//free
 	destroyProcessList(processList);
