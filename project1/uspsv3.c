@@ -126,7 +126,6 @@ void deleteQueue() {
 		dequeue();
 		i++;
 	}
-	printf("dequeued %d times\n", i);
 	free(pQueue);
 	pQueue = NULL;
 }
@@ -352,7 +351,6 @@ static void onusr1(UNUSED int sig){
 }
 
 static void onalrm(UNUSED int sig) {
-	puts("Alarm received");
 	//on alarm called periodically based on quantum. does the scheduling work
 
 	//stop curProc
@@ -361,12 +359,9 @@ static void onalrm(UNUSED int sig) {
 
 	//find next ready process
 	do{
-		puts("dequeuing new curProc");
 		curProc = dequeue();
 
 	}while(!isQueueEmpty() && (curProc->status == 0));
-
-	printf("starting curProc pid: %d, status: %d\n", curProc->pid, curProc->status);
 
 	if (curProc->status == 2){
 		kill(curProc->pid, SIGUSR1);
@@ -385,21 +380,16 @@ static void onchild(UNUSED int sig){
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
 		if (WIFEXITED(status) || WIFSIGNALED(status)) {
 			processesAlive--;
-			printf("processesAlive: %d\n", processesAlive);
 
 			//iterate through processList and set process status of pid to 0.
-			puts("----------iterating over pidList");
 			Process *cur = processList->start->next;
 			while(cur != NULL){
-				printf("checking against pid: %d\n", cur->pid);
 				if (cur->pid == pid){
-					puts("-------status to 0");
 					cur->status = 0;
 					break;
 				}
 				cur = cur->next;
 			}
-			fprintf(stderr, "%d: process finished\n", pid);
 		}
 	}
 }
@@ -407,15 +397,15 @@ static void onchild(UNUSED int sig){
 void setSignalHandlers(){
 	//set sigusr1 handlers
     if (signal(SIGUSR1, onusr1) == SIG_ERR) {
-        fprintf(stderr, "Can't establish SIGUSR1 handler\n");
+    	p1perror(stderr, "Can't establish SIGUSR1 handler\n");
 
     }
     if (signal(SIGALRM, onalrm) == SIG_ERR) {
-        fprintf(stderr, "Can't establish SIGALRM handler\n");
+    	p1perror(stderr, "Can't establish SIGALRM handler\n");
         exit(1);
     }
     if (signal(SIGCHLD, onchild) == SIG_ERR) {
-        fprintf(stderr, "Can't establish SIGCHLD handler\n");
+    	p1perror(stderr, "Can't establish SIGCHLD handler\n");
         exit(1);
     }
 }
@@ -475,7 +465,7 @@ void setTimer(int quantum){
 	it_val.it_value.tv_usec = (quantum*1000) % 1000000;
 	it_val.it_interval = it_val.it_value;
 	if (setitimer(ITIMER_REAL, &it_val, NULL) == -1) {
-		perror("error calling setitimer()");
+		p1perror(2, "error calling setitimer()");
 		exit(1);
 	}
 }
@@ -485,11 +475,12 @@ int main(int argc, char *argv[]){
 
 	//get quantum
 	int quantum = getQuantum(argc, argv);
-	printf("q is %d\n",quantum);
 	if (quantum< 0){
 		p1perror(2, "No quantum found or specified.");
 		exit(1);
 	}
+
+	deleteQueue(); exit(1);
 
 	//make process array from commandline or stdin
 	processList = getWorkload(argc, argv);
@@ -508,7 +499,6 @@ int main(int argc, char *argv[]){
 
 
 	//start first process
-	puts("starting first process");
 	curProc = dequeue();
 	kill(curProc->pid, SIGUSR1);
 
@@ -525,8 +515,6 @@ int main(int argc, char *argv[]){
 
 	//delete queue
 	deleteQueue();
-
-	printf("processes alive at end %d\n", processesAlive);
 
 	//exit when done
 	exit(0);

@@ -153,7 +153,7 @@ void setCommandList(int fd, CommandList *commandList){
 	//make dummy first Command
 	prevCommand = createProcess(0);
 	if (prevCommand == NULL){
-		exit(1); //TODO make proper
+		exit(1);
 	}
 	commandList->start = prevCommand;
 
@@ -172,7 +172,7 @@ void setCommandList(int fd, CommandList *commandList){
 		}
 		currCommand = createProcess(numArgs);
 		if (currCommand == NULL){
-			exit(1); //TODO make proper
+			exit(1);
 		}
 
 		char word[100]; //assume no arg is more than 99 chars long
@@ -222,7 +222,7 @@ CommandList* getWorkload(int argc, char *argv[]){
 
 	CommandList *commandList = createProcessList();
 	if (commandList == NULL){
-		exit(1); //TODO make proper
+		exit(1);
 	}
 
 	// if filename in argv
@@ -262,12 +262,12 @@ int *forkPrograms(CommandList *argList){
 	//malloc for pidList
 	pidList = (int *) malloc(numPrograms * sizeof(int));
 	if (pidList == NULL){
-		exit(1); //TODO: make proper
+		exit(1);
 	}
 
 	//set sigusr1 handler
     if (signal(SIGUSR1, onusr1) == SIG_ERR) {
-        fprintf(stderr, "Can't establish SIGUSR1 handler\n");
+    	p1perror(stderr, "Can't establish SIGUSR1 handler\n");
         return NULL;
     }
 
@@ -300,7 +300,7 @@ void startPrograms(int *pidList, int numPrograms){
 	//function sends USR1 sig to all children
 	int i;
 	for(i=0; i < numPrograms; i++){
-		printf("starting pid: %d\n", pidList[i]);
+		p1perror("starting pid: %d\n", pidList[i]);
 		kill(pidList[i], SIGUSR1);
 	}
 }
@@ -309,7 +309,7 @@ void suspendPrograms(int *pidList, int numPrograms){
 	//function suspends all programs
 	int i;
 	for(i=0; i < numPrograms; i++){
-		printf("suspending pid: %d\n", pidList[i]);
+		p1perror("suspending pid: %d\n", pidList[i]);
 		kill(pidList[i], SIGSTOP);
 	}
 }
@@ -318,7 +318,7 @@ void continuePrograms(int *pidList, int numPrograms){
 	//function continues all programs
 	int i;
 	for(i=0; i < numPrograms; i++){
-		printf("continuing pid: %d\n", pidList[i]);
+		p1perror("continuing pid: %d\n", pidList[i]);
 		kill(pidList[i], SIGCONT);
 	}
 }
@@ -327,7 +327,7 @@ void waitForPrograms(int *pidList, int numPrograms){
 	//function waits until all programs have completed
 	int i;
 	for(i=0; i < numPrograms; i++){
-		printf("waiting on pid: %d\n", pidList[i]);
+		p1perror("waiting on pid: %d\n", pidList[i]);
 		waitpid(pidList[i], 0 ,0);
 	}
 }
@@ -336,7 +336,7 @@ int main(int argc, char *argv[]){
 	//get quantum
 	int quantum;
 	if ((quantum = getQuantum(argc, argv)) < 0){
-		puts("No quantum found or specified."); // TODO: remove?
+		p1perror(2, "No quantum found or specified.");
 		exit(1);
 	}
 

@@ -147,7 +147,7 @@ void setCommandList(int fd, CommandList *commandList){
 	//make dummy first Command
 	prevCommand = createProcess(0);
 	if (prevCommand == NULL){
-		exit(1); //TODO make proper
+		exit(1);
 	}
 	commandList->start = prevCommand;
 
@@ -166,7 +166,7 @@ void setCommandList(int fd, CommandList *commandList){
 		}
 		currCommand = createProcess(numArgs);
 		if (currCommand == NULL){
-			exit(1); //TODO make proper
+			exit(1);
 		}
 
 		char word[100]; //assume no arg is more than 99 chars long
@@ -197,7 +197,7 @@ void setCommandList(int fd, CommandList *commandList){
 
 CommandList* getWorkload(int argc, char *argv[]){
 	/*
-	 * function takes arc and argv
+	 * function takes argc and argv
 	 * returns a linked list of command structs
 	 */
 	char* fileName = NULL;
@@ -216,7 +216,7 @@ CommandList* getWorkload(int argc, char *argv[]){
 
 	CommandList *commandList = createProcessList();
 	if (commandList == NULL){
-		exit(1); //TODO make proper
+		exit(1);
 	}
 
 	// if filename in argv
@@ -248,7 +248,7 @@ void forkPrograms(CommandList *argList){
 	//malloc for pidList
 	pidList = (int *) malloc(numprograms * sizeof(int));
 	if (pidList == NULL){
-		exit(1); //TODO: make proper
+		exit(1);
 	}
 
 	int i;
@@ -278,7 +278,7 @@ int main(int argc, char *argv[]){
 	//get quantum
 	int quantum;
 	if ((quantum = getQuantum(argc, argv)) < 0){
-		puts("No quantum found or specified."); // TODO: remove?
+		p1perror(2, "No quantum found or specified.");
 		exit(1);
 	}
 
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]){
 	CommandList *argList = getWorkload(argc, argv);
 
 	//run each program 	and wait until they are all done
-	forkPrograms(argList);
+	//forkPrograms(argList);
 
 	//free
 	destroyProcessList(argList);

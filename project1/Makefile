@@ -1,31 +1,36 @@
-OBJECTS = p1fxns.o uspsv3.o
+OBJECTS1 = p1fxns.o uspsv1.o
+OBJECTS2 = p1fxns.o uspsv2.o
+OBJECTS3 = p1fxns.o uspsv3.o
+OBJECTS4 = p1fxns.o uspsv4.o
+
 CFLAGS = -W -Wall -g
 CC = gcc
-PROG_NAME = usps
+PROG_NAME = uspsv
 ARGS = --quantum=800 workload_file.txt
 
-test: current
-	./$(PROG_NAME) $(ARGS)
-
-sense: current
-	gdb ./$(PROG_NAME) 
-
-waterproof: current
-	(valgrind --track-origins=yes -v ./$(PROG_NAME) $(ARGS)) || true
-
-current: uspsv3 cpu io
-
-uspsv1: $(OBJECTS) 
-	$(CC) $(OBJECTS) -o $(PROG_NAME)
-
-uspsv2: $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(PROG_NAME)
+all: uspsv1 uspsv2 uspsv3 uspsv4 cpu io
+	./$(PROG_NAME)1 $(ARGS)
 	
-uspsv3: $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(PROG_NAME)
+test: all
+	./$(PROG_NAME)1 $(ARGS)
+
+sense: all
+	gdb ./$(PROG_NAME)1
+
+waterproof: all
+	(valgrind --track-origins=yes --leak-check=full -v ./$(PROG_NAME)1 $(ARGS)) || true
+
+uspsv1: $(OBJECTS1) 
+	$(CC) $(OBJECTS1) -o uspsv1
+
+uspsv2: $(OBJECTS2)
+	$(CC) $(OBJECTS2) -o uspsv2
 	
-uspsv4: $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(PROG_NAME)
+uspsv3: $(OBJECTS3)
+	$(CC) $(OBJECTS3) -o uspsv3
+	
+uspsv4: $(OBJECTS4)
+	$(CC) $(OBJECTS4) -o uspsv4
 
 cpu: cpubound.o
 	$(CC) cpubound.o -o cpubound
