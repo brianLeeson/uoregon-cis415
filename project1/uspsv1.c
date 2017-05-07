@@ -10,28 +10,123 @@
  *      talked out loud about C syntax, data structures, and some function calls.
  */
 
-#include "p1fxns.h"
-#include <stdlib.h>
-#include <string.h>
+#include <time.h>
 #include <stdio.h>
-#include <fcntl.h>
+#include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/time.h>
+#include <signal.h>
+#include "p1fxns.h"
 
 #define BUFFSIZE 256
+#define UNUSED __attribute__((unused))
+struct q;
+typedef struct q Queue;
+typedef struct process Process;
 
-typedef struct command{
-	struct command *next;
+
+volatile int USR1_received = 0;
+volatile int processesAlive = 0;
+Process *curProc;
+int *pidList;
+
+//make Global queue
+Queue *pQueue;
+
+struct process{
+	struct process *next;
 	char *cmd;
 	char **args;
-}Command;
+	int pid;
+	int status;
+};
 
 //Linked List
-typedef struct commandList{
-	Command *start;
+typedef struct processList{
+	Process *start;
 	int numCommands; //this does not include dummy
-}CommandList;
+}ProcessList;
+
+
+ProcessList *processList;
+
+/* ----- QUEUE ----- */
+
+typedef struct pNode {
+        Process *process;
+        struct pNode *next;
+} ProcessNode;
+
+struct q {
+	ProcessNode *head;
+	ProcessNode *tail;
+};
+
+void queueInit() {
+	//initializes global pQueue
+	pQueue = malloc(sizeof(Queue));
+	if (pQueue == NULL) {
+		p1perror(2, "Error: queueInit(): failed to malloc");
+		exit(1);
+	}
+	pQueue->head = NULL;
+	pQueue->tail = NULL;
+}
+
+void enqueue(Process *p) {
+	//enqueue to global pQueue
+	ProcessNode *newNode = malloc(sizeof(ProcessNode));
+	if (newNode == NULL) {
+		p1perror(2, "Error: enqueue(): failed to malloc");
+		exit(1);
+	}
+	newNode->process = p;
+	newNode->next = NULL;
+	if (pQueue->head == NULL) {
+		pQueue->head = newNode;
+		pQueue->tail = newNode;
+	}else {
+		pQueue->tail->next = newNode;
+		pQueue->tail = newNode;
+	}
+}
+
+Process *dequeue() {
+	if (pQueue->head == NULL) {
+		p1perror(2, "Error: dequeue(Queue): dequeuing of an empty");
+		exit(1);
+	}
+	Process *ret = pQueue->head->process;
+	ProcessNode *tmp = pQueue->head;
+	pQueue->head = pQueue->head->next;
+	tmp->next = NULL;
+	free(tmp);
+	return ret;
+}
+
+unsigned int isQueueEmpty(){
+	if (pQueue->head == NULL){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+
+void deleteQueue() {
+	int i = 0;
+	while(!isQueueEmpty()) {
+		dequeue();
+		i++;
+	}
+	free(pQueue);
+	pQueue = NULL;
+}
 
 
 Command *createProcess(int numArgs){
