@@ -29,9 +29,6 @@ struct q;
 typedef struct q Queue;
 typedef struct process Process;
 
-
-volatile int USR1_received = 0;
-volatile int processesAlive = 0;
 Process *curProc;
 int *pidList;
 
@@ -161,6 +158,8 @@ void deleteQueue() {
 	pQueue = NULL;
 }
 
+/* ----- Functions ----- */
+
 void stripNewLine(char word[]){
 	int i = 0;
 	while (word[i] != '\0'){
@@ -200,7 +199,7 @@ int getQuantum(int argc, char *argv[]){
 	return quantum;
 }
 
-void setProcessList(int fd){
+void setupQueue(int fd){
 	int n;
 	char buff[BUFFSIZE];
 	Process *currProcess = NULL;
@@ -265,13 +264,13 @@ void getWorkload(int argc, char *argv[]){
 	// if filename in argv
 	if (fileName != NULL){
 		fd = open(fileName, 0);
-		setProcessList(fd);
+		setupQueue(fd);
 	}
 
 	//else read from stdin
 	else{
 		fd = 0;
-		setProcessList(fd);
+		setupQueue(fd);
 	}
 }
 
@@ -315,7 +314,6 @@ void forkPrograms(){
 
 int main(int argc, char *argv[]){
 	queueInit();
-	//deleteQueue(); exit(0);
 
 	//get quantum
 	int quantum;
@@ -324,7 +322,7 @@ int main(int argc, char *argv[]){
 		exit(1);
 	}
 
-	//command array from commandline or stdin
+	//process array from commandline or stdin
 	getWorkload(argc, argv);
 
 	//run each program 	and wait until they are all done

@@ -31,7 +31,6 @@ struct q;
 typedef struct q Queue;
 typedef struct process Process;
 
-
 volatile int USR1_received = 0;
 volatile int processesAlive = 0;
 Process *curProc;
@@ -397,15 +396,15 @@ static void onchild(UNUSED int sig){
 void setSignalHandlers(){
 	//set sigusr1 handlers
     if (signal(SIGUSR1, onusr1) == SIG_ERR) {
-    	p1perror(stderr, "Can't establish SIGUSR1 handler\n");
+    	p1perror(2, "Can't establish SIGUSR1 handler\n");
 
     }
     if (signal(SIGALRM, onalrm) == SIG_ERR) {
-    	p1perror(stderr, "Can't establish SIGALRM handler\n");
+    	p1perror(2, "Can't establish SIGALRM handler\n");
         exit(1);
     }
     if (signal(SIGCHLD, onchild) == SIG_ERR) {
-    	p1perror(stderr, "Can't establish SIGCHLD handler\n");
+    	p1perror(2, "Can't establish SIGCHLD handler\n");
         exit(1);
     }
 }

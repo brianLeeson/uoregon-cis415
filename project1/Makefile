@@ -11,13 +11,13 @@ ARGS = --quantum=800 workload_file.txt
 all: uspsv1 uspsv2 uspsv3 uspsv4 cpu io
 	
 test: all
-	./$(PROG_NAME)1 $(ARGS)
+	./$(PROG_NAME)2 $(ARGS)
 
 sense: all
-	gdb ./$(PROG_NAME)1
+	gdb ./$(PROG_NAME)2
 
 waterproof: all
-	(valgrind --track-origins=yes --leak-check=full -v ./$(PROG_NAME)1 $(ARGS)) || true
+	(valgrind --track-origins=yes --leak-check=full -v ./$(PROG_NAME)2 $(ARGS)) || true
 
 uspsv1: $(OBJECTS1) 
 	$(CC) $(OBJECTS1) -o uspsv1
