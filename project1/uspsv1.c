@@ -54,7 +54,6 @@ typedef struct processList{
 }ProcessList;
 
 Process *createProcess(int numArgs){
-	printf("making process with %d args\n", numArgs);
 	Process *processStruct = (Process *)malloc(sizeof(Process));
 
 	if (processStruct != NULL){
@@ -81,7 +80,6 @@ void destroyProcess(Process *p){
 	char *arg;
 	while(i <= p->numArgs){
 		arg = p->args[i++];
-		printf("freeing arg %s\n", arg);
 		free(arg);
 	}
 	free(p->args);
@@ -282,10 +280,7 @@ void forkPrograms(){
 	 * calls all programs in the queue
 	 */
 	int *pidList;
-	int numprograms = argList->numProcesss;
-
-	//get command, skip dummy
-	Process *command = argList->start->next;
+	int numprograms = pQueue->initialSize;
 
 	//malloc for pidList
 	pidList = (int *) malloc(numprograms * sizeof(int));
@@ -293,20 +288,23 @@ void forkPrograms(){
 		exit(1);
 	}
 
-	int i;
-	for(i=0; i < numprograms; i++){
+	int i = 0;
+	ProcessNode *cur = pQueue->head;
+	while(cur != NULL){
 		pidList[i] = fork();
-		if (pidList[i] == 0){
-			char *prog = command->cmd;
-			char **args = command->args;
-			execvp(prog, args);
+			if (pidList[i] == 0){
+				char *prog = cur->process->cmd;
+				char **args = cur->process->args;
+				execvp(prog, args);
 
-			//if illegal program or unallowed program
-			p1perror(2, "execvp fail");
-			exit(1);
-		}
-		command = command->next;
+				//if illegal program or unallowed program
+				p1perror(2, "execvp fail");
+				exit(1);
+			}
+		cur = cur->next;
+		i++;
 	}
+
 	for(i=0; i < numprograms; i++){
 		waitpid(pidList[i],0 ,0 );
 	}
