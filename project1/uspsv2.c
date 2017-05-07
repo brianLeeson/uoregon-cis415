@@ -40,7 +40,7 @@ typedef struct commandList{
 }CommandList;
 
 
-Command *createCommand(int numArgs){
+Command *createProcess(int numArgs){
 	Command *commandStruct = (Command *)malloc(sizeof(Command));
 
 	if (commandStruct != NULL){
@@ -57,7 +57,7 @@ Command *createCommand(int numArgs){
 	return commandStruct;
 }
 
-void destroyCommand(Command *command){
+void destroyProcess(Command *command){
 	//free cmd
 	free(command->cmd);
 
@@ -71,7 +71,7 @@ void destroyCommand(Command *command){
 	free(command);
 }
 
-CommandList *createCommandList(){
+CommandList *createProcessList(){
 	CommandList *commandListStruct = (CommandList *)malloc(sizeof(CommandList));
 
 	if (commandListStruct != NULL){
@@ -81,7 +81,7 @@ CommandList *createCommandList(){
 	return commandListStruct;
 }
 
-void destroyCommandList(CommandList *commandList){
+void destroyProcessList(CommandList *commandList){
 	// free commands
 	Command *current;
 	if ((current = commandList->start) != NULL){
@@ -96,7 +96,7 @@ void destroyCommandList(CommandList *commandList){
 		while (current != NULL){
 			//free current
 			next = current->next;
-			destroyCommand(current);
+			destroyProcess(current);
 			current = next;
 		}
 	}
@@ -151,7 +151,7 @@ void setCommandList(int fd, CommandList *commandList){
 	Command *currCommand = NULL;
 
 	//make dummy first Command
-	prevCommand = createCommand(0);
+	prevCommand = createProcess(0);
 	if (prevCommand == NULL){
 		exit(1); //TODO make proper
 	}
@@ -170,7 +170,7 @@ void setCommandList(int fd, CommandList *commandList){
 		while ((i = p1getword(tempBuff, i, wordBuff)) > 0){
 			numArgs++;
 		}
-		currCommand = createCommand(numArgs);
+		currCommand = createProcess(numArgs);
 		if (currCommand == NULL){
 			exit(1); //TODO make proper
 		}
@@ -220,7 +220,7 @@ CommandList* getWorkload(int argc, char *argv[]){
 		}
 	}
 
-	CommandList *commandList = createCommandList();
+	CommandList *commandList = createProcessList();
 	if (commandList == NULL){
 		exit(1); //TODO make proper
 	}
@@ -361,7 +361,7 @@ int main(int argc, char *argv[]){
 	waitForPrograms(pidList, numPrograms);
 
 	//free
-	destroyCommandList(argList);
+	destroyProcessList(argList);
 
 	//dealloc pidList
 	free(pidList);

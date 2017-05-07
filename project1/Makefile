@@ -2,7 +2,7 @@ OBJECTS = p1fxns.o uspsv3.o
 CFLAGS = -W -Wall -g
 CC = gcc
 PROG_NAME = usps
-ARGS = --quantum=1000 workload_file.txt
+ARGS = --quantum=800 workload_file.txt
 
 test: current
 	./$(PROG_NAME) $(ARGS)
@@ -11,7 +11,7 @@ sense: current
 	gdb ./$(PROG_NAME) 
 
 waterproof: current
-	(valgrind --leak-check=full -v ./$(PROG_NAME)) || true
+	(valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -v ./$(PROG_NAME)) || true
 
 current: uspsv3 cpu io
 

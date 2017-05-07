@@ -35,6 +35,7 @@ typedef struct process Process;
 volatile int USR1_received = 0;
 volatile int processesAlive = 0;
 Process *curProc;
+int *pidList;
 
 //make Global queue
 Queue *pQueue;
@@ -99,7 +100,7 @@ void enqueue(Process *p) {
 
 Process *dequeue() {
 	if (pQueue->head == NULL) {
-		p1perror(2, "Error: dequeue(): failed to malloc");
+		p1perror(2, "Error: dequeue(Queue): dequeuing of an empty");
 		exit(1);
 	}
 	Process *ret = pQueue->head->process;
@@ -120,15 +121,19 @@ unsigned int isQueueEmpty(){
 }
 
 void deleteQueue() {
-        while(!isQueueEmpty()) {
-                dequeue();
-        }
-        free(pQueue);
+	int i = 0;
+	while(!isQueueEmpty()) {
+		dequeue();
+		i++;
+	}
+	printf("dequeued %d times\n", i);
+	free(pQueue);
+	pQueue = NULL;
 }
 
 /* ----- Functions ----- */
 
-Process *createCommand(int numArgs){
+Process *createProcess(int numArgs){
 	Process *processStruct = (Process *)malloc(sizeof(Process));
 
 	if (processStruct != NULL){
@@ -147,21 +152,21 @@ Process *createCommand(int numArgs){
 	return processStruct;
 }
 
-void destroyCommand(Process *command){
+void destroyProcess(Process *p){
 	//free cmd
-	free(command->cmd);
+	free(p->cmd);
 
 	//free args
 	int i = 0;
 	char *arg;
-	while((arg = command->args[i++]) != NULL){
+	while((arg = p->args[i++]) != NULL){
 		free(arg);
 	}
 	//free struct
-	free(command);
+	free(p);
 }
 
-ProcessList *createCommandList(){
+ProcessList *createProcessList(){
 	ProcessList *processListStruct = (ProcessList *)malloc(sizeof(ProcessList));
 
 	if (processListStruct != NULL){
@@ -171,7 +176,7 @@ ProcessList *createCommandList(){
 	return processListStruct;
 }
 
-void destroyCommandList(ProcessList *processList){
+void destroyProcessList(ProcessList *processList){
 	// free commands
 	Process *current;
 	if ((current = processList->start) != NULL){
@@ -186,7 +191,7 @@ void destroyCommandList(ProcessList *processList){
 		while (current != NULL){
 			//free current
 			next = current->next;
-			destroyCommand(current);
+			destroyProcess(current);
 			current = next;
 		}
 	}
@@ -241,7 +246,7 @@ void setCommandList(int fd, ProcessList *commandList){
 	Process *currCommand = NULL;
 
 	//make dummy first Command
-	prevCommand = createCommand(0);
+	prevCommand = createProcess(0);
 	if (prevCommand == NULL){
 		exit(1);
 	}
@@ -260,7 +265,7 @@ void setCommandList(int fd, ProcessList *commandList){
 		while ((i = p1getword(tempBuff, i, wordBuff)) > 0){
 			numArgs++;
 		}
-		currCommand = createCommand(numArgs);
+		currCommand = createProcess(numArgs);
 
 		//add currCommand to queue
 		enqueue(currCommand);
@@ -315,7 +320,7 @@ ProcessList* getWorkload(int argc, char *argv[]){
 		}
 	}
 
-	ProcessList *commandList = createCommandList();
+	ProcessList *commandList = createProcessList();
 	if (commandList == NULL){
 		exit(1);
 	}
@@ -348,7 +353,7 @@ static void onusr1(UNUSED int sig){
 }
 
 static void onalrm(UNUSED int sig) {
-	//puts("Alarm received");
+	puts("Alarm received");
 	//on alarm called periodically based on quantum. does the scheduling work
 
 	//stop curProc
@@ -362,10 +367,11 @@ static void onalrm(UNUSED int sig) {
 
 	}while(!isQueueEmpty() && (curProc->status == 0));
 
-	printf("pid is: %d\n", curProc->pid);
+	printf("starting curProc pid: %d, status: %d\n", curProc->pid, curProc->status);
 
 	if (curProc->status == 2){
 		kill(curProc->pid, SIGUSR1);
+		curProc->status = 1;
 	}
 	else if(curProc->status == 1){
 		kill(curProc->pid, SIGCONT);
@@ -380,12 +386,13 @@ static void onchild(UNUSED int sig){
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
 		if (WIFEXITED(status) || WIFSIGNALED(status)) {
 			processesAlive--;
+			printf("processesAlive: %d\n", processesAlive);
 
 			//iterate through processList and set process status of pid to 0.
-			puts("----------iterating");
+			puts("----------iterating over pidList");
 			Process *cur = processList->start->next;
 			while(cur != NULL){
-				printf("%d\n", cur->pid);
+				printf("checking against pid: %d\n", cur->pid);
 				if (cur->pid == pid){
 					puts("-------status to 0");
 					cur->status = 0;
@@ -476,6 +483,7 @@ void setTimer(int quantum){
 
 int main(int argc, char *argv[]){
 	queueInit();
+	//deleteQueue(); return 0;
 
 	//get quantum
 	int quantum;
@@ -488,8 +496,6 @@ int main(int argc, char *argv[]){
 	processList = getWorkload(argc, argv);
 	int numProcesses = processList->numCommands;
 
-	int * pidList; //TODO: remove
-
 	//set sig handlers
 	setSignalHandlers();
 
@@ -501,17 +507,20 @@ int main(int argc, char *argv[]){
 
 	processesAlive = numProcesses;
 
+
 	//start first process
 	puts("starting first process");
 	curProc = dequeue();
 	kill(curProc->pid, SIGUSR1);
 
+	struct timespec tm = {0, 20000000};
 	while (processesAlive){
-		pause();
+		(void)nanosleep(&tm, NULL);
 	}
 
+
 	//free
-	destroyCommandList(processList);
+	destroyProcessList(processList);
 
 	//dealloc pidList
 	free(pidList);
@@ -519,8 +528,9 @@ int main(int argc, char *argv[]){
 	//delete queue
 	deleteQueue();
 
-	printf("processes alive %d\n", processesAlive);
+	printf("processes alive at end %d\n", processesAlive);
 
 	//exit when done
 	exit(0);
+
 }
