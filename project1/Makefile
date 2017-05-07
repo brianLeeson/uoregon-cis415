@@ -9,7 +9,6 @@ PROG_NAME = uspsv
 ARGS = --quantum=800 workload_file.txt
 
 all: uspsv1 uspsv2 uspsv3 uspsv4 cpu io
-	./$(PROG_NAME)1 $(ARGS)
 	
 test: all
 	./$(PROG_NAME)1 $(ARGS)

@@ -1,4 +1,4 @@
-echo thread 1 
+echo thread 1
 echo thread 2
 echo thread 3
 echo thread 4

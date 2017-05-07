@@ -44,16 +44,51 @@ struct process{
 	char **args;
 	int pid;
 	int status;
+	int numArgs;
 };
 
 //Linked List
 typedef struct processList{
 	Process *start;
-	int numCommands; //this does not include dummy
+	int numProcesss; //this does not include dummy
 }ProcessList;
 
+Process *createProcess(int numArgs){
+	printf("making process with %d args\n", numArgs);
+	Process *processStruct = (Process *)malloc(sizeof(Process));
 
-ProcessList *processList;
+	if (processStruct != NULL){
+		processStruct->args = (char **) malloc((numArgs+1) * sizeof(char *));
+
+		if (processStruct->args == NULL){
+			free(processStruct);
+			return processStruct = NULL;
+		}
+		processStruct->numArgs = numArgs;
+		processStruct->cmd = NULL;
+		processStruct->next = NULL;
+	}
+
+	return processStruct;
+}
+
+void destroyProcess(Process *p){
+	//free cmd
+	free(p->cmd);
+
+	//free args
+	int i = 0;
+	char *arg;
+	while(i <= p->numArgs){
+		arg = p->args[i++];
+		printf("freeing arg %s\n", arg);
+		free(arg);
+	}
+	free(p->args);
+
+	//free struct
+	free(p);
+}
 
 /* ----- QUEUE ----- */
 
@@ -63,6 +98,7 @@ typedef struct pNode {
 } ProcessNode;
 
 struct q {
+	int initialSize;
 	ProcessNode *head;
 	ProcessNode *tail;
 };
@@ -74,6 +110,7 @@ void queueInit() {
 		p1perror(2, "Error: queueInit(): failed to malloc");
 		exit(1);
 	}
+	pQueue->initialSize = 0;
 	pQueue->head = NULL;
 	pQueue->tail = NULL;
 }
@@ -119,79 +156,11 @@ unsigned int isQueueEmpty(){
 }
 
 void deleteQueue() {
-	int i = 0;
 	while(!isQueueEmpty()) {
-		dequeue();
-		i++;
+		destroyProcess(dequeue());
 	}
 	free(pQueue);
 	pQueue = NULL;
-}
-
-
-Command *createProcess(int numArgs){
-	Command *commandStruct = (Command *)malloc(sizeof(Command));
-
-	if (commandStruct != NULL){
-		commandStruct->args = (char **) malloc((numArgs+1) * sizeof(char *));
-
-		if (commandStruct->args == NULL){
-			free(commandStruct);
-			return commandStruct = NULL;
-		}
-		commandStruct->cmd = NULL;
-		commandStruct->next = NULL;
-	}
-
-	return commandStruct;
-}
-
-void destroyProcess(Command *command){
-	//free cmd
-	free(command->cmd);
-
-	//free args
-	int i = 0;
-	char *arg;
-	while((arg = command->args[i++]) != NULL){
-		free(arg);
-	}
-	//free struct
-	free(command);
-}
-
-CommandList *createProcessList(){
-	CommandList *commandListStruct = (CommandList *)malloc(sizeof(CommandList));
-
-	if (commandListStruct != NULL){
-		commandListStruct->start = NULL;
-		commandListStruct->numCommands = 0;
-	}
-	return commandListStruct;
-}
-
-void destroyProcessList(CommandList *commandList){
-	// free commands
-	Command *current;
-	if ((current = commandList->start) != NULL){
-		Command *next;
-
-		//free dummy command struct
-		next = current->next;
-		free(current);
-		current = next;
-
-		//while more command structs to free
-		while (current != NULL){
-			//free current
-			next = current->next;
-			destroyProcess(current);
-			current = next;
-		}
-	}
-
-	// free CommandList
-	free(commandList);
 }
 
 void stripNewLine(char word[]){
@@ -233,18 +202,10 @@ int getQuantum(int argc, char *argv[]){
 	return quantum;
 }
 
-void setCommandList(int fd, CommandList *commandList){
+void setProcessList(int fd){
 	int n;
 	char buff[BUFFSIZE];
-	Command *prevCommand = NULL;
-	Command *currCommand = NULL;
-
-	//make dummy first Command
-	prevCommand = createProcess(0);
-	if (prevCommand == NULL){
-		exit(1);
-	}
-	commandList->start = prevCommand;
+	Process *currProcess = NULL;
 
 	//while lines remaining in workfile
 	while((n = p1getline(fd, buff, sizeof(buff))) > 0){
@@ -259,8 +220,8 @@ void setCommandList(int fd, CommandList *commandList){
 		while ((i = p1getword(tempBuff, i, wordBuff)) > 0){
 			numArgs++;
 		}
-		currCommand = createProcess(numArgs);
-		if (currCommand == NULL){
+		currProcess = createProcess(numArgs);
+		if (currProcess == NULL){
 			exit(1);
 		}
 
@@ -270,34 +231,28 @@ void setCommandList(int fd, CommandList *commandList){
 		//get command
 		p1getword(buff, 0, word);
 		stripNewLine(word);
-		currCommand->cmd = p1strdup(word);
+		currProcess->cmd = p1strdup(word);
 
 		//get args
 		int index = 0;
 		while ((j = p1getword(buff, j, word)) > 0){
 			stripNewLine(word);
-			currCommand->args[index++] = p1strdup(word);
+			currProcess->args[index++] = p1strdup(word);
 		}
-		currCommand->args[index] = NULL;
+		currProcess->args[index] = NULL;
 
-		prevCommand->next = currCommand;
-		prevCommand = currCommand;
-		commandList->numCommands++;
-	}
-	//prevCommand is last struct of linked list
-	if (commandList->start != NULL){
-		prevCommand->next = NULL;  //redundant?
+		pQueue->initialSize++;
+		enqueue(currProcess);
 	}
 }
 
-CommandList* getWorkload(int argc, char *argv[]){
+void getWorkload(int argc, char *argv[]){
 	/*
 	 * function takes argc and argv
 	 * returns a linked list of command structs
 	 */
 	char* fileName = NULL;
 	int fd;
-
 
 	//check if file in argv
 	if(argc > 1){
@@ -309,36 +264,28 @@ CommandList* getWorkload(int argc, char *argv[]){
 		}
 	}
 
-	CommandList *commandList = createProcessList();
-	if (commandList == NULL){
-		exit(1);
-	}
-
 	// if filename in argv
 	if (fileName != NULL){
 		fd = open(fileName, 0);
-		setCommandList(fd, commandList);
+		setProcessList(fd);
 	}
 
 	//else read from stdin
 	else{
 		fd = 0;
-		setCommandList(fd, commandList);
+		setProcessList(fd);
 	}
-
-	return commandList;
 }
 
-void forkPrograms(CommandList *argList){
+void forkPrograms(){
 	/*
-	 * function takes a commandlist that represents all programs to execute.
-	 * calls all programs in the argslist
+	 * calls all programs in the queue
 	 */
 	int *pidList;
-	int numprograms = argList->numCommands;
+	int numprograms = argList->numProcesss;
 
 	//get command, skip dummy
-	Command *command = argList->start->next;
+	Process *command = argList->start->next;
 
 	//malloc for pidList
 	pidList = (int *) malloc(numprograms * sizeof(int));
@@ -369,6 +316,8 @@ void forkPrograms(CommandList *argList){
 }
 
 int main(int argc, char *argv[]){
+	queueInit();
+	//deleteQueue(); exit(0);
 
 	//get quantum
 	int quantum;
@@ -378,13 +327,13 @@ int main(int argc, char *argv[]){
 	}
 
 	//command array from commandline or stdin
-	CommandList *argList = getWorkload(argc, argv);
+	getWorkload(argc, argv);
 
 	//run each program 	and wait until they are all done
-	//forkPrograms(argList);
+	forkPrograms();
 
 	//free
-	destroyProcessList(argList);
+	deleteQueue();
 
 	//exit when done
 	exit(0);
