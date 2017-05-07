@@ -267,7 +267,7 @@ int *forkPrograms(CommandList *argList){
 
 	//set sigusr1 handler
     if (signal(SIGUSR1, onusr1) == SIG_ERR) {
-    	p1perror(stderr, "Can't establish SIGUSR1 handler\n");
+    	p1perror(2, "Can't establish SIGUSR1 handler\n");
         return NULL;
     }
 
@@ -300,7 +300,6 @@ void startPrograms(int *pidList, int numPrograms){
 	//function sends USR1 sig to all children
 	int i;
 	for(i=0; i < numPrograms; i++){
-		p1perror("starting pid: %d\n", pidList[i]);
 		kill(pidList[i], SIGUSR1);
 	}
 }
@@ -309,7 +308,6 @@ void suspendPrograms(int *pidList, int numPrograms){
 	//function suspends all programs
 	int i;
 	for(i=0; i < numPrograms; i++){
-		p1perror("suspending pid: %d\n", pidList[i]);
 		kill(pidList[i], SIGSTOP);
 	}
 }
@@ -318,7 +316,6 @@ void continuePrograms(int *pidList, int numPrograms){
 	//function continues all programs
 	int i;
 	for(i=0; i < numPrograms; i++){
-		p1perror("continuing pid: %d\n", pidList[i]);
 		kill(pidList[i], SIGCONT);
 	}
 }
@@ -327,7 +324,6 @@ void waitForPrograms(int *pidList, int numPrograms){
 	//function waits until all programs have completed
 	int i;
 	for(i=0; i < numPrograms; i++){
-		p1perror("waiting on pid: %d\n", pidList[i]);
 		waitpid(pidList[i], 0 ,0);
 	}
 }
