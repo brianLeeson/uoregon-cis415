@@ -292,6 +292,7 @@ static void onusr1(UNUSED int sig){
 
 static void onalrm(UNUSED int sig) {
 	//on alarm called periodically based on quantum. does the scheduling work
+	signal(SIGINT, SIG_IGN);
 
 	//stop curProc
 	kill(curProc->pid, SIGSTOP);
@@ -322,7 +323,7 @@ static void onalrm(UNUSED int sig) {
 	else{
 		p1perror(2, "this should never happen");
 	}
-
+	signal(SIGINT, SIG_DFL);
 }
 
 static void onchild(UNUSED int sig){

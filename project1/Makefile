@@ -50,6 +50,13 @@ cpubound.o: cpubound.c
 
 iobound.o: iobound.c 
 
+tar:
+	rm -rf bel*
+	mkdir bel
+	cp uspsv1.c uspsv2.c uspsv3.c uspsv4.c p1fxns.c p1fxns.h Makefile report.txt bel
+	
+	
+
 clean:
 	rm uspsv1
 	rm uspsv2
