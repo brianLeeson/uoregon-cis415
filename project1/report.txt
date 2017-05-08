@@ -9,3 +9,5 @@ I believe that I am only running one process at a time, but when I test with "to
 it shows that one process is using up ~80% of the cpu, while the previously running process is using ~10%.
 I am assuming that this is because top shows the average usage over a time period and over one of it's time periods
 two of my processes could be running.
+
+not sure how to test that sigints have been disabled when in onchild handler, but believe that i've done it correctly.
