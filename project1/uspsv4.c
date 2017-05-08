@@ -278,24 +278,68 @@ void getWorkload(int argc, char *argv[]){
 
 void displayUsage(Process *p){
 	//display information about process about to be scheduled
+	int fd;
+	int n;
 	int pid = p->pid;
 	char filePath[BUFSIZE];
+	char info[BUFSIZE];
+
 	printf("PID: %d --- ", pid);
 
 	//put pid as string into buff
 	char buf[BUFSIZE];
 	p1itoa(pid, buf);
 
-
-
 	// command being executed
 	p1strcpy(filePath, "/proc/");
 	p1strcat(filePath, buf);
+	p1strcat(filePath, "/cmdline/");
 
+	printf("path is: %s --- ", filePath);
+	fd = open(filePath, 0);
 
-	printf("path is: %s\n", filePath);
+	if((n = p1getline(fd, info, sizeof(info))) > 0){
+		printf("command is %s\n", info);
+	}
+	/*
+	while((n = p1getline(fd, info, sizeof(info))) > 0){
 
-	//fd = open(fileName, 0);
+			int numArgs = 0;
+			char wordBuff[100];
+			char tempBuff[BUFSIZE];
+			int i = 0;
+
+			//get num args in buff
+			p1strcpy(tempBuff, info);
+			while ((i = p1getword(tempBuff, i, wordBuff)) > 0){
+				numArgs++;
+			}
+			currProcess = createProcess(numArgs);
+			if (currProcess == NULL){
+				p1perror(2, "failed creating process");
+				exit(1);
+			}
+
+			char word[100]; //assume no arg is more than 99 chars long
+			int j = 0;
+
+			//get command
+			p1getword(buff, 0, word);
+			stripNewLine(word);
+			currProcess->cmd = p1strdup(word);
+
+			//get args
+			int index = 0;
+			while ((j = p1getword(buff, j, word)) > 0){
+				stripNewLine(word);
+				currProcess->args[index++] = p1strdup(word);
+			}
+			currProcess->args[index] = NULL;
+
+			pQueue->initialSize++;
+			enqueue(currProcess);
+		}
+	*/
 
 	//execution time
 
