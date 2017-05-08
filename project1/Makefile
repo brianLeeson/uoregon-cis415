@@ -19,16 +19,16 @@ waterproof: all
 	(valgrind --track-origins=yes --leak-check=full  --show-leak-kinds=all -v ./$(PROG_NAME)4 $(ARGS)) || true
 
 uspsv1: $(OBJECTS1) 
-	$(CC) $(OBJECTS1) -o $(PROG_NAME)1
+	$(CC) $(OBJECTS1) $(CFLAGS) -o $(PROG_NAME)1
 
 uspsv2: $(OBJECTS2)
-	$(CC) $(OBJECTS2) -o $(PROG_NAME)2
+	$(CC) $(OBJECTS2) $(CFLAGS) -o $(PROG_NAME)2
 	
 uspsv3: $(OBJECTS3)
-	$(CC) $(OBJECTS3) -o $(PROG_NAME)3
+	$(CC) $(OBJECTS3) $(CFLAGS) -o $(PROG_NAME)3
 	
 uspsv4: $(OBJECTS4)
-	$(CC) $(OBJECTS4) -o $(PROG_NAME)4
+	$(CC) $(OBJECTS4) $(CFLAGS) -o $(PROG_NAME)4
 
 cpu: cpubound.o
 	$(CC) cpubound.o -o cpubound
