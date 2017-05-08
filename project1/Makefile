@@ -6,7 +6,7 @@ OBJECTS4 = p1fxns.o uspsv4.o
 CFLAGS = -W -Wall -g
 CC = gcc
 PROG_NAME = uspsv
-ARGS = workload_file.txt
+ARGS = --quantum=1000 workload_file.txt
 
 all: uspsv1 uspsv2 uspsv3 uspsv4 cpu io
 	
