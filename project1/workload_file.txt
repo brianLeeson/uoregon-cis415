@@ -1,10 +1,6 @@
-echo thread 1
-echo thread 2
-echo thread 3
-echo thread 4
-echo thread 5
-sleep 1
-sleep 2
-sleep 3
-sleep 4
-sleep 5
+./cpubound -name 1
+./cpubound -name 2
+./cpubound -name 3
+./iobound -name 1
+./iobound -name 2
+./iobound -name 3

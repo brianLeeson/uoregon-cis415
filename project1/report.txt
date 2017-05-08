@@ -1,5 +1,11 @@
 State of my code
-uspsv1, 2, and 3:
-compiles, runs, I believe runs to spec, no memory leaks found by valgrind.
+uspsv1, 2, 3, and 4:
+compile, run, I believe run to spec, with no memory leaks found by valgrind.
 
-in order to solve a memory leak problem in v3 I did kindof a hack and I am not quite sure if it will work with more complicated testing. I does work with the standard workfiles from piazza.
+In order to solve a memory leak problem in v3 I did a hack and I am not quite sure if it will work with more complicated testing. 
+It does work with the standard workfiles from piazza.
+
+I believe that I am only running one process at a time, but when I test with "top",
+it shows that one process is using up ~80% of the cpu, while the previously running process is using ~10%.
+I am assuming that this is because top shows the average usage over a time period and over one of it's time periods
+two of my processes could be running.

@@ -283,6 +283,10 @@ void displayUsage(Process *p){
 	int pid = p->pid;
 	char filePath[BUFSIZE];
 	char info[BUFSIZE];
+	int i= 0;
+	char wordBuff[100];
+	char tempBuff[BUFSIZE];
+
 
 	printf("PID: %d --- ", pid);
 
@@ -295,65 +299,41 @@ void displayUsage(Process *p){
 	p1strcat(filePath, buf);
 	p1strcat(filePath, "/cmdline");
 
-	//printf("path is: %s --- ", filePath);
 	fd = open(filePath, 0);
 
 	if((n = p1getline(fd, info, sizeof(info))) > 0){
 		printf("command: %s --- ", info);
 	}
-	/*
-	while((n = p1getline(fd, info, sizeof(info))) > 0){
-
-			int numArgs = 0;
-			char wordBuff[100];
-			char tempBuff[BUFSIZE];
-			int i = 0;
-
-			//get num args in buff
-			p1strcpy(tempBuff, info);
-			while ((i = p1getword(tempBuff, i, wordBuff)) > 0){
-				numArgs++;
-			}
-			currProcess = createProcess(numArgs);
-			if (currProcess == NULL){
-				p1perror(2, "failed creating process");
-				exit(1);
-			}
-
-			char word[100]; //assume no arg is more than 99 chars long
-			int j = 0;
-
-			//get command
-			p1getword(buff, 0, word);
-			stripNewLine(word);
-			currProcess->cmd = p1strdup(word);
-
-			//get args
-			int index = 0;
-			while ((j = p1getword(buff, j, word)) > 0){
-				stripNewLine(word);
-				currProcess->args[index++] = p1strdup(word);
-			}
-			currProcess->args[index] = NULL;
-
-			pQueue->initialSize++;
-			enqueue(currProcess);
-		}
-	*/
 
 	//execution time
-	//TODO
+	p1strcpy(filePath, "/proc/");
+	p1strcat(filePath, buf);
+	p1strcat(filePath, "/sched");
+
+	fd = open(filePath, 0);
+
+	int j = 0;
+	for(j=0; j<5; j++){
+		n= p1getline(fd, info, sizeof(info));
+	}
+
+	if(n > 0){
+		p1strcpy(tempBuff, info);
+		if((i = p1getword(tempBuff, 0, wordBuff)) > 0){
+			if((i = p1getword(tempBuff, i, wordBuff)) > 0){
+				if((i = p1getword(tempBuff, i, wordBuff)) > 0){
+					stripNewLine(wordBuff);
+					printf("exec time: %s ms --- ", wordBuff);
+				}
+			}
+		}
+	}
 
 	//memory used
-	int i= 0;
-	char wordBuff[100];
-	char tempBuff[BUFSIZE];
-
 	p1strcpy(filePath, "/proc/");
 	p1strcat(filePath, buf);
 	p1strcat(filePath, "/statm");
 
-	//printf("path is: %s --- ", filePath);
 	fd = open(filePath, 0);
 
 	if((n = p1getline(fd, info, sizeof(info))) > 0){
@@ -361,7 +341,6 @@ void displayUsage(Process *p){
 		if((i = p1getword(tempBuff, 0, wordBuff)) > 0){
 			printf("size: %s --- ", wordBuff);
 		}
-
 	}
 
 	//and I/O
@@ -369,7 +348,6 @@ void displayUsage(Process *p){
 	p1strcat(filePath, buf);
 	p1strcat(filePath, "/io");
 
-	//printf("path is: %s --- ", filePath);
 	fd = open(filePath, 0);
 
 	if((n = p1getline(fd, info, sizeof(info))) > 0){
@@ -381,7 +359,6 @@ void displayUsage(Process *p){
 			}
 		}
 	}
-	//printf("line: %s --- ", info);
 
 	if((n = p1getline(fd, info, sizeof(info))) > 0){
 		p1strcpy(tempBuff, info);
@@ -392,9 +369,6 @@ void displayUsage(Process *p){
 			}
 		}
 	}
-	//printf("line: %s --- ", info);
-
-
 }
 
 static void onusr1(UNUSED int sig){
