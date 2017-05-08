@@ -11,13 +11,13 @@ ARGS = --quantum=1000 workload_file.txt
 all: uspsv1 uspsv2 uspsv3 uspsv4 cpu io
 	
 test: all
-	./$(PROG_NAME)3 $(ARGS)
+	./$(PROG_NAME)4 $(ARGS)
 
 sense: all
-	gdb ./$(PROG_NAME)3
+	gdb ./$(PROG_NAME)4
 
 waterproof: all
-	(valgrind --track-origins=yes --leak-check=full  --show-leak-kinds=all -v ./$(PROG_NAME)3 $(ARGS)) || true
+	(valgrind --track-origins=yes --leak-check=full  --show-leak-kinds=all -v ./$(PROG_NAME)4 $(ARGS)) || true
 
 uspsv1: $(OBJECTS1) 
 	$(CC) $(OBJECTS1) -o uspsv1
@@ -45,12 +45,17 @@ uspsv2.o: uspsv2.c
 
 uspsv3.o: uspsv3.c
 
+uspsv4.o: uspsv4.c
+
 cpubound.o: cpubound.c
 
 iobound.o: iobound.c 
 
 clean:
-	rm $(PROG_NAME)
+	rm uspsv1
+	rm uspsv2
+	rm uspsv3
+	rm uspsv4
 	rm *.o
 	rm cpubound 
 	rm iobound 

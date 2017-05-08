@@ -1,5 +1,5 @@
 /*
- * uspsv4.c
+ * uspsv3.c
  *
  *  Created on: Apr 28, 2017
  *      Author: brian
@@ -59,12 +59,15 @@ Process *createProcess(int numArgs){
 		}
 		processStruct->numArgs = numArgs;
 		processStruct->cmd = NULL;
+		processStruct->pid = -1; //no pid yet;
+		processStruct->status = 2; //2: waiting for usr1, 1, for cont, 0 it's dead jim.
 	}
 
 	return processStruct;
 }
-
+int dp = 0;
 void destroyProcess(Process *p){
+	dp++;
 	//free cmd
 	free(p->cmd);
 
@@ -146,9 +149,11 @@ unsigned int isQueueEmpty(){
 	}
 }
 
+int j = 0;
 void deleteQueue() {
 	while(!isQueueEmpty()) {
 		destroyProcess(dequeue());
+		j++;
 	}
 	free(pQueue);
 	pQueue = NULL;
@@ -215,6 +220,7 @@ void setupQueue(int fd){
 		}
 		currProcess = createProcess(numArgs);
 		if (currProcess == NULL){
+			p1perror(2, "failed creating process");
 			exit(1);
 		}
 
@@ -270,6 +276,25 @@ void getWorkload(int argc, char *argv[]){
 	}
 }
 
+void displayUsage(Process *p){
+	//display information about process about to be scheduled
+	int pid = p->pid;
+	char* fileName = NULL;
+	printf("printing important info about pid: %d\n", pid);
+
+	// command being executed
+	//make file name array
+	//fileName =
+	//fd = open(fileName, 0);
+
+	//execution time
+
+	//memory used
+
+	//and I/O
+
+}
+
 static void onusr1(UNUSED int sig){
 	//this function handles usr1 signals that are sent to our process.
 	switch(sig){
@@ -287,12 +312,23 @@ static void onalrm(UNUSED int sig) {
 	//stop curProc
 	kill(curProc->pid, SIGSTOP);
 	enqueue(curProc);
-
-	//find next ready process
-	do{
+	int found = 0;
+	while(!isQueueEmpty() && !found){
+		//get new proc
 		curProc = dequeue();
 
-	}while(!isQueueEmpty() && (curProc->status == 0));
+		//if status 0, destroy
+		if (curProc->status == 0){
+			destroyProcess(curProc);
+		}
+
+		//else, success
+		else{
+			found = 1;
+		}
+	}
+
+	displayUsage(curProc);
 
 	if (curProc->status == 2){
 		curProc->status = 1;
@@ -300,6 +336,9 @@ static void onalrm(UNUSED int sig) {
 	}
 	else if(curProc->status == 1){
 		kill(curProc->pid, SIGCONT);
+	}
+	else{
+		p1perror(2, "this should never happen");
 	}
 }
 
@@ -335,7 +374,7 @@ void setSignalHandlers(){
 	//set sigusr1 handlers
     if (signal(SIGUSR1, onusr1) == SIG_ERR) {
     	p1perror(2, "Can't establish SIGUSR1 handler\n");
-
+    	exit(1);
     }
     if (signal(SIGALRM, onalrm) == SIG_ERR) {
     	p1perror(2, "Can't establish SIGALRM handler\n");
@@ -356,14 +395,21 @@ int *forkPrograms(){
 	//malloc for pidList
 	pidList = (int *) malloc(numprograms * sizeof(int));
 	if (pidList == NULL){
+		p1perror(2, "failed creating pid");
 		exit(1);
 	}
 
 	int i = 0;
+	struct timespec tm = {0, 20000000};
 	ProcessNode *cur = pQueue->head;
 	while(cur != NULL){
 		pidList[i] = fork();
 			if (pidList[i] == 0){
+				//wait for sigusr1
+				while (! USR1_received){
+					(void)nanosleep(&tm, NULL);
+				}
+
 				char *prog = cur->process->cmd;
 				char **args = cur->process->args;
 				execvp(prog, args);
@@ -372,15 +418,18 @@ int *forkPrograms(){
 				p1perror(2, "execvp fail");
 				exit(1);
 			}
+			else if (pidList[i] > 0){
+				cur->process->pid = pidList[i];
+			}
+			else{
+				p1perror(2, "fork unsuccessful");
+				exit(1);
+			}
 		cur = cur->next;
 		i++;
 	}
 
-	for(i=0; i < numprograms; i++){
-		waitpid(pidList[i],0 ,0 );
-	}
 
-	//dealloc pidList
 	return pidList;
 }
 
@@ -404,8 +453,6 @@ int main(int argc, char *argv[]){
 		p1perror(2, "No quantum found or specified.");
 		exit(1);
 	}
-
-	deleteQueue(); exit(1);
 
 	//make process array from commandline or stdin
 	getWorkload(argc, argv);
@@ -435,7 +482,7 @@ int main(int argc, char *argv[]){
 
 	//delete queue
 	deleteQueue();
-
+	destroyProcess(curProc); //don't like that I do this, should be handled in deleteQueue
 	//exit when done
 	exit(0);
 

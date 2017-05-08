@@ -355,7 +355,6 @@ void setSignalHandlers(){
     if (signal(SIGUSR1, onusr1) == SIG_ERR) {
     	p1perror(2, "Can't establish SIGUSR1 handler\n");
     	exit(1);
-
     }
     if (signal(SIGALRM, onalrm) == SIG_ERR) {
     	p1perror(2, "Can't establish SIGALRM handler\n");
