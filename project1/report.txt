@@ -1,0 +1,5 @@
+State of my code
+uspsv1, 2, and 3:
+compiles, runs, I believe runs to spec, no memory leaks found by valgrind.
+
+in order to solve a memory leak problem in v3 I did kindof a hack and I am not quite sure if it will work with more complicated testing. I does work with the standard workfiles from piazza.
