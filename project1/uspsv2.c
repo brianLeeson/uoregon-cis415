@@ -9,6 +9,7 @@
  *      This is my own work except Holden Marsh, Sam Oberg, and I
  *      talked out loud about C syntax, data structures, and some function calls.
  *      Additionally we help think about specific bugs that caused race conditions.
+ *      ADT Queue based off of: https://github.com/rkwan/adt/blob/master/queue/queue.c
  */
 
 #include <time.h>
@@ -301,6 +302,13 @@ int *forkPrograms(){
 
 				//if illegal program or unallowed program
 				p1perror(2, "execvp fail");
+				exit(1);
+			}
+			else if (pidList[i] > 0){
+				cur->process->pid = pidList[i];
+			}
+			else{
+				//fork unsuccessful
 				exit(1);
 			}
 		cur = cur->next;

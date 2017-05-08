@@ -8,6 +8,8 @@
  *
  *      This is my own work except Holden Marsh, Sam Oberg, and I
  *      talked out loud about C syntax, data structures, and some function calls.
+ *      ADT Queue based off of: https://github.com/rkwan/adt/blob/master/queue/queue.c
+
  */
 
 #include <time.h>

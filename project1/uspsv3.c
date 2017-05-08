@@ -216,6 +216,7 @@ void setupQueue(int fd){
 		}
 		currProcess = createProcess(numArgs);
 		if (currProcess == NULL){
+			p1perror(2, "failed creating process");
 			exit(1);
 		}
 
@@ -336,6 +337,7 @@ void setSignalHandlers(){
 	//set sigusr1 handlers
     if (signal(SIGUSR1, onusr1) == SIG_ERR) {
     	p1perror(2, "Can't establish SIGUSR1 handler\n");
+    	exit(1);
 
     }
     if (signal(SIGALRM, onalrm) == SIG_ERR) {
@@ -357,14 +359,21 @@ int *forkPrograms(){
 	//malloc for pidList
 	pidList = (int *) malloc(numprograms * sizeof(int));
 	if (pidList == NULL){
+		p1perror(2, "failed creating pid");
 		exit(1);
 	}
 
 	int i = 0;
+	struct timespec tm = {0, 20000000};
 	ProcessNode *cur = pQueue->head;
 	while(cur != NULL){
 		pidList[i] = fork();
 			if (pidList[i] == 0){
+				//wait for sigusr1
+				while (! USR1_received){
+					(void)nanosleep(&tm, NULL);
+				}
+
 				char *prog = cur->process->cmd;
 				char **args = cur->process->args;
 				execvp(prog, args);
@@ -373,15 +382,18 @@ int *forkPrograms(){
 				p1perror(2, "execvp fail");
 				exit(1);
 			}
+			else if (pidList[i] > 0){
+				cur->process->pid = pidList[i];
+			}
+			else{
+				p1perror(2, "fork unsuccessful");
+				exit(1);
+			}
 		cur = cur->next;
 		i++;
 	}
 
-	for(i=0; i < numprograms; i++){
-		waitpid(pidList[i],0 ,0 );
-	}
 
-	//dealloc pidList
 	return pidList;
 }
 
@@ -405,8 +417,6 @@ int main(int argc, char *argv[]){
 		p1perror(2, "No quantum found or specified.");
 		exit(1);
 	}
-
-	deleteQueue(); exit(1);
 
 	//make process array from commandline or stdin
 	getWorkload(argc, argv);
