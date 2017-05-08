@@ -191,8 +191,10 @@ int getQuantum(int argc, char *argv[]){
 		if(p1strneq(argName, argv[1], argLen)){
 			quantum = p1atoi(&(argv[1][argLen]));
 		}
+	}
+	else if (argc > 2){
 		//if quantum is 2nd arg
-		else if(p1strneq(argName, argv[2], argLen)){
+		if(p1strneq(argName, argv[2], argLen)){
 			quantum = p1atoi(&(argv[2][argLen]));
 		}
 	}
