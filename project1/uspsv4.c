@@ -293,13 +293,13 @@ void displayUsage(Process *p){
 	// command being executed
 	p1strcpy(filePath, "/proc/");
 	p1strcat(filePath, buf);
-	p1strcat(filePath, "/cmdline/");
+	p1strcat(filePath, "/cmdline");
 
-	printf("path is: %s --- ", filePath);
+	//printf("path is: %s --- ", filePath);
 	fd = open(filePath, 0);
 
 	if((n = p1getline(fd, info, sizeof(info))) > 0){
-		printf("command is %s\n", info);
+		printf("command: %s --- ", info);
 	}
 	/*
 	while((n = p1getline(fd, info, sizeof(info))) > 0){
@@ -342,10 +342,58 @@ void displayUsage(Process *p){
 	*/
 
 	//execution time
+	//TODO
 
 	//memory used
+	int i= 0;
+	char wordBuff[100];
+	char tempBuff[BUFSIZE];
+
+	p1strcpy(filePath, "/proc/");
+	p1strcat(filePath, buf);
+	p1strcat(filePath, "/statm");
+
+	//printf("path is: %s --- ", filePath);
+	fd = open(filePath, 0);
+
+	if((n = p1getline(fd, info, sizeof(info))) > 0){
+		p1strcpy(tempBuff, info);
+		if((i = p1getword(tempBuff, 0, wordBuff)) > 0){
+			printf("size: %s --- ", wordBuff);
+		}
+
+	}
 
 	//and I/O
+	p1strcpy(filePath, "/proc/");
+	p1strcat(filePath, buf);
+	p1strcat(filePath, "/io");
+
+	//printf("path is: %s --- ", filePath);
+	fd = open(filePath, 0);
+
+	if((n = p1getline(fd, info, sizeof(info))) > 0){
+		p1strcpy(tempBuff, info);
+		if((i = p1getword(tempBuff, 0, wordBuff)) > 0){
+			if((i = p1getword(tempBuff, i, wordBuff)) > 0){
+				stripNewLine(wordBuff);
+				printf("bytes read: %s --- ", wordBuff);
+			}
+		}
+	}
+	//printf("line: %s --- ", info);
+
+	if((n = p1getline(fd, info, sizeof(info))) > 0){
+		p1strcpy(tempBuff, info);
+		if((i = p1getword(tempBuff, 0, wordBuff)) > 0){
+			if((i = p1getword(tempBuff, i, wordBuff)) > 0){
+				stripNewLine(wordBuff);
+				printf("bytes written: %s\n", wordBuff);
+			}
+		}
+	}
+	//printf("line: %s --- ", info);
+
 
 }
 
