@@ -446,6 +446,11 @@ int main(int argc, char *argv[]){
 	int numProcesses = pQueue->initialSize;
 	processesAlive = numProcesses;
 
+	if(isQueueEmpty()){
+		p1perror(2, "Empty work_file empty");
+		exit(1);
+	}
+
 	//set sig handlers
 	setSignalHandlers();
 

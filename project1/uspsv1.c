@@ -322,6 +322,11 @@ int main(int argc, char *argv[]){
 	//process array from commandline or stdin
 	getWorkload(argc, argv);
 
+	if(isQueueEmpty()){
+		p1perror(2, "Empty work_file empty");
+		exit(1);
+	}
+
 	//run each program 	and wait until they are all done
 	forkPrograms();
 
