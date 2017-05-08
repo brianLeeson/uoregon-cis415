@@ -186,7 +186,7 @@ int getQuantum(int argc, char *argv[]){
 	if ((p = getenv("USPS_QUANTUM_MSEC")) != NULL){
 		quantum = p1atoi(p);
 	}
-	if (argc > 1) {
+	else if (argc > 1) {
 		//if quantum is 1st arg
 		if(p1strneq(argName, argv[1], argLen)){
 			quantum = p1atoi(&(argv[1][argLen]));
@@ -525,7 +525,7 @@ int main(int argc, char *argv[]){
 
 	//get quantum
 	int quantum = getQuantum(argc, argv);
-	if (quantum< 0){
+	if (quantum < 0){
 		p1perror(2, "No quantum found or specified.");
 		exit(1);
 	}
