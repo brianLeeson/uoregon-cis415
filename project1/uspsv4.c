@@ -24,7 +24,7 @@
 #include <signal.h>
 #include "p1fxns.h"
 
-#define BUFFSIZE 256
+#define BUFSIZE 512
 #define UNUSED __attribute__((unused))
 struct q;
 typedef struct q Queue;
@@ -202,7 +202,7 @@ int getQuantum(int argc, char *argv[]){
 
 void setupQueue(int fd){
 	int n;
-	char buff[BUFFSIZE];
+	char buff[BUFSIZE];
 	Process *currProcess = NULL;
 
 	//while lines remaining in workfile
@@ -210,7 +210,7 @@ void setupQueue(int fd){
 
 		int numArgs = 0;
 		char wordBuff[100];
-		char tempBuff[BUFFSIZE];
+		char tempBuff[BUFSIZE];
 		int i = 0;
 
 		//get num args in buff
@@ -279,12 +279,22 @@ void getWorkload(int argc, char *argv[]){
 void displayUsage(Process *p){
 	//display information about process about to be scheduled
 	int pid = p->pid;
-	char* fileName = NULL;
-	printf("printing important info about pid: %d\n", pid);
+	char filePath[BUFSIZE];
+	printf("PID: %d --- ", pid);
+
+	//put pid as string into buff
+	char buf[BUFSIZE];
+	p1itoa(pid, buf);
+
+
 
 	// command being executed
-	//make file name array
-	//fileName =
+	p1strcpy(filePath, "/proc/");
+	p1strcat(filePath, buf);
+
+
+	printf("path is: %s\n", filePath);
+
 	//fd = open(fileName, 0);
 
 	//execution time
