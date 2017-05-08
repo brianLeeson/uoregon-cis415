@@ -6,7 +6,7 @@ OBJECTS4 = p1fxns.o uspsv4.o
 CFLAGS = -W -Wall -g
 CC = gcc
 PROG_NAME = uspsv
-ARGS = --quantum=800 workload_file.txt
+ARGS = --quantum=1000 workload_file.txt
 
 all: uspsv1 uspsv2 uspsv3 uspsv4 cpu io
 	
@@ -17,7 +17,7 @@ sense: all
 	gdb ./$(PROG_NAME)3
 
 waterproof: all
-	(valgrind --track-origins=yes --leak-check=full -v ./$(PROG_NAME)3 $(ARGS)) || true
+	(valgrind --track-origins=yes --leak-check=full  --show-leak-kinds=all -v ./$(PROG_NAME)3 $(ARGS)) || true
 
 uspsv1: $(OBJECTS1) 
 	$(CC) $(OBJECTS1) -o uspsv1

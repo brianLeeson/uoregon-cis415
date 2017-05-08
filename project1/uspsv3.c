@@ -60,12 +60,15 @@ Process *createProcess(int numArgs){
 		}
 		processStruct->numArgs = numArgs;
 		processStruct->cmd = NULL;
+		processStruct->pid = -1; //no pid yet;
+		processStruct->status = 2; //2: waiting for usr1, 1, for cont, 0 it's dead jim.
 	}
 
 	return processStruct;
 }
-
+int dp = 0;
 void destroyProcess(Process *p){
+	dp++;
 	//free cmd
 	free(p->cmd);
 
@@ -147,9 +150,11 @@ unsigned int isQueueEmpty(){
 	}
 }
 
+int j = 0;
 void deleteQueue() {
 	while(!isQueueEmpty()) {
 		destroyProcess(dequeue());
+		j++;
 	}
 	free(pQueue);
 	pQueue = NULL;
@@ -289,12 +294,21 @@ static void onalrm(UNUSED int sig) {
 	//stop curProc
 	kill(curProc->pid, SIGSTOP);
 	enqueue(curProc);
-
-	//find next ready process
-	do{
+	int found = 0;
+	while(!isQueueEmpty() && !found){
+		//get new proc
 		curProc = dequeue();
 
-	}while(!isQueueEmpty() && (curProc->status == 0));
+		//if status 0, destroy
+		if (curProc->status == 0){
+			destroyProcess(curProc);
+		}
+
+		//else, success
+		else{
+			found = 1;
+		}
+	}
 
 	if (curProc->status == 2){
 		curProc->status = 1;
@@ -302,6 +316,9 @@ static void onalrm(UNUSED int sig) {
 	}
 	else if(curProc->status == 1){
 		kill(curProc->pid, SIGCONT);
+	}
+	else{
+		p1perror(2, "this should never happen");
 	}
 }
 
@@ -446,7 +463,7 @@ int main(int argc, char *argv[]){
 
 	//delete queue
 	deleteQueue();
-
+	destroyProcess(curProc); //don't like that I do this, should be handled in deleteQueue
 	//exit when done
 	exit(0);
 
