@@ -27,16 +27,27 @@ Contiguous Memory Allocation
 	Over time CMA causes external fragmentation as processes finish out of allocation order. This requires managing the "holes" 
 	left by completed processes. Depending on how this managing is done, more memory than is requested can be given to a process if 
 	the process requests a relatively small amount of memory, leading to internal fragmentation. Because fragmentation can become severe 
-	enough to require compaction, a processes assigned physical address may change 
+	enough to require compaction, a process's assigned physical address may change. This potential for address change requires processes
+	wishing to share data to know each others base addresses at all times.
 
 Pure Segmentation
 	Segmentation also will suffer from external fragmentation for the same reasons as CMA, but potentially less so as processes are broken 
 	up into smaller segments. Internal fragmentation will also occur for the sames reasons as CMA. Sharing code becomes more difficult than
-	CMA as the process is broken up into segments. In order to get the location of a relevant byte, we can no longer got to the beginning of 
+	CMA as the process is broken up into segments and we must know the base of the segmenat we wish to use. This address is subject to change
+	by compaction, just like in CMA. In order to get the location of a relevant byte, we can no longer go to the beginning of 
 	a process plus offset. We must got out to the MUM and find the relevant segment. This is slower than CMA, but similar to Paging.
 	
 Pure Paging
 	Avoids external fragmentation as every process is broken up into pages that evenly fit into frames, so there will never be a page too big
 	to fit into a frame. Unless a process is exactly a multiple of the page size there will be internal fragmentation as the last section of the
-	process must fit into a page.
+	process must fit into a page. With paging we no longer have to worry about compaction. The physcial address of the process fragment (page) 
+	must be looked up by the MMU just like in Segmentation.
+
+3. OSC 8.25:
+a. If a memory reference takes 50 nanoseconds, how long does a paged memory reference take?
+	100 ns. 50 ns for getting the address of the page table, 50 ns for getting the address of the byte.
+
+b. If we add TLBs, and 75% of all page-table references are found in the TLBs, what is the effective memory reference time?
+	effective access time = 0.75 × 52 + 0.25 × 100 = 64 ns 
+
 	
