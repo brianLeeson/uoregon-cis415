@@ -28,20 +28,20 @@ Contiguous Memory Allocation
 	left by completed processes. Depending on how this managing is done, more memory than is requested can be given to a process if 
 	the process requests a relatively small amount of memory, leading to internal fragmentation. Because fragmentation can become severe 
 	enough to require compaction, a process's assigned physical address may change. This potential for address change requires processes
-	wishing to share data to know each others base addresses at all times.
+	wishing to share data to know each others base addresses at all times. Processes cannot point to one copy of data like they can 
+	in segmentation or paging
 
 Pure Segmentation
 	Segmentation also will suffer from external fragmentation for the same reasons as CMA, but potentially less so as processes are broken 
-	up into smaller segments. Internal fragmentation will also occur for the sames reasons as CMA. Sharing code becomes more difficult than
-	CMA as the process is broken up into segments and we must know the base of the segmenat we wish to use. This address is subject to change
-	by compaction, just like in CMA. In order to get the location of a relevant byte, we can no longer go to the beginning of 
-	a process plus offset. We must got out to the MUM and find the relevant segment. This is slower than CMA, but similar to Paging.
+	up into smaller segments. Internal fragmentation will also occur for the sames reasons as CMA. Sharing code becomes less difficult than
+	CMA as two separate processes can point to the same shared segment.
 	
 Pure Paging
 	Avoids external fragmentation as every process is broken up into pages that evenly fit into frames, so there will never be a page too big
 	to fit into a frame. Unless a process is exactly a multiple of the page size there will be internal fragmentation as the last section of the
 	process must fit into a page. With paging we no longer have to worry about compaction. The physcial address of the process fragment (page) 
-	must be looked up by the MMU just like in Segmentation.
+	must be looked up by the MMU just like in Segmentation. Also like segmentation we can have two processes looking at the same section (page)
+	to share data.
 
 3. OSC 8.25:
 a. If a memory reference takes 50 nanoseconds, how long does a paged memory reference take?
@@ -52,12 +52,19 @@ b. If we add TLBs, and 75% of all page-table references are found in the TLBs, w
 
 4. OSC 9.14:
 a. TLB miss with no page fault
-	page table not in TLB and accessing a valid page of the process
+	mapping not in TLB and accessing a valid page of the process in main memory
 b. TLB miss and page fault
-	page table not in TLB and accessing an invalid page of the process
+	mapping not in TLB and accessing an invalid page of the process or a page that has not been loaded in yet.
 c. TLB hit and no page fault
-	page table in TLB and accessing a valid page of the process
+	Mapping in TLB and accessing a valid page of the process in main memory
 d. TLB hit and page fault
-	page table in TLB and accessing an invalid page of the process.
-	potentially not possible if invalid pages not stored in TLB
-	
+	Not possible as the TLB only contains valid mapings frome pages to frames in main memory. 
+	A fault would imply that either we aren't allowed to view it or it is not in memory.
+
+5. OSC 9.21:
+a. LRU
+	18
+b. FIFO
+	17
+c. Optimal
+	13
