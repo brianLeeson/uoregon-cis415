@@ -50,4 +50,14 @@ a. If a memory reference takes 50 nanoseconds, how long does a paged memory refe
 b. If we add TLBs, and 75% of all page-table references are found in the TLBs, what is the effective memory reference time?
 	effective access time = 0.75 × 52 + 0.25 × 100 = 64 ns 
 
+4. OSC 9.14:
+a. TLB miss with no page fault
+	page table not in TLB and accessing a valid page of the process
+b. TLB miss and page fault
+	page table not in TLB and accessing an invalid page of the process
+c. TLB hit and no page fault
+	page table in TLB and accessing a valid page of the process
+d. TLB hit and page fault
+	page table in TLB and accessing an invalid page of the process.
+	potentially not possible if invalid pages not stored in TLB
 	
