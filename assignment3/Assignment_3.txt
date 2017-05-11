@@ -25,12 +25,20 @@ f. Decrease the number of processes
 2. OSC 8.13:
 Contiguous Memory Allocation
 	Over time CMA causes external fragmentation as processes finish out of allocation order. This requires managing the "holes" 
-	left by completed processes. Depending on how this managing is done, more memory than is requested can be given to a process, 
-	leading to internal fragmentation. Compared to other methods CMA makes it relatively simple to share code across the process as
-	only the contiguous block must be traversed. It is also faster as it does not require requests to the MMU to find locations of code.
-	All code is relative within the contiguous block.
+	left by completed processes. Depending on how this managing is done, more memory than is requested can be given to a process if 
+	the process requests a relatively small amount of memory, leading to internal fragmentation. Compared to other methods CMA makes 
+	it relatively simple to share code across the process as only the contiguous block must be traversed. It is also faster as it does 
+	not require requests to the MMU to find locations of code. All code is relative within the contiguous block, making the ability to
+	share code easier than segmentation or paging.
 
 Pure Segmentation
-	Segmentation also will suffer from external fragmentation for the same reasons as CMA, but less so as processes are broken up into smaller segments
-
+	Segmentation also will suffer from external fragmentation for the same reasons as CMA, but potentially less so as processes are broken 
+	up into smaller segments. Internal fragmentation will also occur for the sames reasons as CMA. Sharing code becomes more difficult than
+	CMA as the process is broken up into segments. In order to get the location of a relavent byte, we can no longer got to the begining of 
+	a process plus offset. We must got out to the MMU and find the relavent segment. This is slower than CMA, but similar to Paging.
+	
 Pure Paging
+	Avoids external fragmentation as every process is broken up into pages that evenly fit into frames, so there will never be a page too big
+	to fit into a frame. Unless a process is exactly a muliple of the page size there will be internal fragmentation as the last section of the
+	process must fit into a page.
+	
