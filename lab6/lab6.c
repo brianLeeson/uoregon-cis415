@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <pthread.h>
 
-
 #define THREAD_COUNT 4
 
 char *messages[] = {"Hello","World","Test","String",NULL};
@@ -16,19 +15,16 @@ pthread_t pthreads[THREAD_COUNT];
 int memory_size = 0;
 volatile char *memory = "StartingMessage";
 
-void set_message(char *message)
-{
+void set_message(char *message){
 	memory = message;
 }
 
-char *get_message()
-{
+char *get_message(){
 	char *returnValue = memory;
 	return returnValue;
 }
 
-void *pthread_proc(void *ptr)
-{	
+void *pthread_proc(void *ptr){
 	char *message = (char*)ptr;
 	
 	// check message... ?
@@ -45,22 +41,33 @@ void *pthread_proc(void *ptr)
 	return NULL;
 }
 
-void create_threads()
-{
+void create_threads(){
 	// create a thread passing 1 message each.
 	// for each:  print the thread id and the message passed. 
+	pthread_t t1, t2, t3, t4;
+	int i;
+	//make array of pthreads
+	for(i = 0; i < THREAD_COUNT; i++){
+		pthreads[i] =
 
+	}
+
+	for(i = 0; i<THREAD_COUNT; i++){
+		if (pthread_create(&t1, NULL, pthread_proc, (void *)messages[i])) {
+			fprintf(stderr, "Error creating thread 1\n");
+			exit(1);
+		}
+
+	}
 
 }
 
-void wait_for_threads_to_exit()
-{
+void wait_for_threads_to_exit(){
 	// spin in a loop, wait for each thread to exit.
 
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
 	create_threads();
 	
 	wait_for_threads_to_exit();
