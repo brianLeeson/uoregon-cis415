@@ -1,0 +1,46 @@
+The following calls to DIAGNOSTICS() occur in the network device module for
+Project 2.  If you see these in the output from your solution to the
+project, you are doing something wrong, and need to fix it.
+
+
+1. DIAGNOSTICS("BUG: Two or more parallel calls to send a packet\n");
+If you see this diagnostic, your code has called the device to send a packet
+while it is still processing the previous send.  The transmit side of the
+device can only handle one packet at a time.
+
+2. DIAGNOSTICS("[Device> Error: Dropping data. No receiver packet.\n");
+This diagnostic is printed if a message has arrived for this device and you
+do not have a packet descriptor registered to receive it.  You must structure
+your receive logic such that there is always a packet descriptor registered
+with the device.
+
+3. DIAGNOSTICS("[Device> Error: Dropping data. Receiver packet is full.\n");
+This diagnostic is printed if an uninitialized packet descriptor has been
+registered with the device.  Before registering a descriptor, you must always
+initialize it.
+
+4. DIAGNOSTICS("[Device> Warning: Data received but no thread waiting.\n");
+While there was a packet descriptor registered with the device to successfully
+receive the packet from the network, your code has not called the await
+function.  the await function should be called immediately after a packet
+descriptor has been registered.
+
+5. DIAGNOSTICS("[Device> Error: Attempting to register another packet descriptor.\n");
+    DIAGNOSTICS("[Device> Error (contd): New descriptor ignored.\n");
+These two diagnostic lines are printed if you attempt to register a packet
+descriptor with the device when there is already a packet descriptor
+registered.
+
+6. DIAGNOSTICS("[Device> Error: more than one waiting thread\n");
+Only one thread can be waiting for the packet to be filled.
+
+7. DIAGNOSTICS("[Device> Error: awaiting packet but no registered descriptor.\n");
+Your code called the await function without having registered a packet
+descriptor.
+
+Most of these are reporting bugs in your code that you must fix.  2 and 4
+indicate a design flaw in your receive logic that enables packets to be
+missed from the network (2) and your logic is tardy in retrieving filled
+packets (4).  The Handout is quite explicit that your driver must make
+every effort to receive each and every packet destined for the machine upon
+which your driver is running.
