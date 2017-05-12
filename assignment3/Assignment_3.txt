@@ -17,7 +17,8 @@ d. Decrease Max for one process (the process decides it does not need that many 
 	Decreasing max resources requested is okay in all circumstances.
 
 e. Increase the number of processes
-	Increasing the number of processes is okay in all circumstances.
+	Increasing the number of processes is okay in all circumstances. We could simply add a process and not allocate memory to it until 
+	it is safe to do so.
 	
 f. Decrease the number of processes
 	Decreasing the number of processes is okay in all circumstances.
@@ -40,7 +41,7 @@ Pure Paging
 	Avoids external fragmentation as every process is broken up into pages that evenly fit into frames, so there will never be a page too big
 	to fit into a frame. Unless a process is exactly a multiple of the page size there will be internal fragmentation as the last section of the
 	process must fit into a page. With paging we no longer have to worry about compaction. The physcial address of the process fragment (page) 
-	must be looked up by the MMU just like in Segmentation. Also like segmentation we can have two processes looking at the same section (page)
+	must be looked up by the MMU just like in Segmentation. Also, like segmentation, we can have two processes looking at the same section (page)
 	to share data.
 
 3. OSC 8.25:
