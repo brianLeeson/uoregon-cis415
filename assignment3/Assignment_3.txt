@@ -33,14 +33,14 @@ Contiguous Memory Allocation
 	in segmentation or paging
 
 Pure Segmentation
-	Segmentation also will suffer from external fragmentation for the same reasons as CMA, but potentially less so as processes are broken 
-	up into smaller segments. Internal fragmentation will also occur for the sames reasons as CMA. Sharing code becomes less difficult than
+	Segmentation also will suffer from external and internal fragmentation for the same reasons as CMA, but potentially less so as processes are
+	broken up into smaller segments. Internal fragmentation will also occur for the sames reasons as CMA. Sharing code becomes less difficult than
 	CMA as two separate processes can point to the same shared segment.
 	
 Pure Paging
 	Avoids external fragmentation as every process is broken up into pages that evenly fit into frames, so there will never be a page too big
 	to fit into a frame. Unless a process is exactly a multiple of the page size there will be internal fragmentation as the last section of the
-	process must fit into a page. With paging we no longer have to worry about compaction. The physcial address of the process fragment (page) 
+	process must fit into a page. With paging we no longer have to worry about compaction. The physical address of the process fragment (page) 
 	must be looked up by the MMU just like in Segmentation. Also, like segmentation, we can have two processes looking at the same section (page)
 	to share data.
 
@@ -59,13 +59,17 @@ b. TLB miss and page fault
 c. TLB hit and no page fault
 	Mapping in TLB and accessing a valid page of the process in main memory
 d. TLB hit and page fault
-	Not possible as the TLB only contains valid mapings frome pages to frames in main memory. 
+	Not possible as the TLB only contains valid mappings from pages to frames in main memory. 
 	A fault would imply that either we aren't allowed to view it or it is not in memory.
 
-5. OSC 9.21:
+5. OSC 9.21: series: 72312534677105462301
+The series is given in order, with insertions that do not cause pages faults having been removed from the series.
 a. LRU
-	18
+	18 pages faults
+	723153467105462301
 b. FIFO
-	17
+	17 pages faults
+	72315467105462301
 c. Optimal
-	13
+	13 pages faults
+	7231546704623

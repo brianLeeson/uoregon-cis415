@@ -60,6 +60,7 @@ int  nonblocking_get_packet(PacketDescriptor **pd, PID pid);
 
 void init_network_driver(NetworkDevice               *nd, 
                          void                        *mem_start, 
+
                          unsigned long               mem_length,
                          FreePacketDescriptorStore **fpds_ptr);
 /* Called before any other methods, to allow you to initialise */
