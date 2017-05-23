@@ -8,6 +8,6 @@ mydemo: $(OBJECTS)
 	gcc -o mydemo $(CFLAGS) $(OBJECTS) -lpthread
 
 clean:
-	rm -f *.o mydemo
+	rm -f networkdriver.o mydemo
 
 networkdriver.o: networkdriver.c

@@ -42,6 +42,6 @@ PID packet_descriptor_get_pid(PacketDescriptor *pd);
 Destination packet_descriptor_get_destination(PacketDescriptor *pd);
 
 /* Routines for manipulating the actual data are omitted, we don't bother */
-/* sending actual data in this testharness.........                       */
+/* sending actual data in this test harness.........                       */
 
 #endif /* __PACKET_DESCRIPTOR_HDR */
