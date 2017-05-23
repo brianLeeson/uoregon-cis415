@@ -20,20 +20,32 @@
 
 #include "networkdevice.h"
 
-#define TO_NET_SIZE 100
-#define TO_APP_SIZE 100
+#define APP_BB_SIZE 2
 
 /* any global variables required for use by your threads and your driver routines */
 int NUM_PID = 0;
+int INITIALIZED = 0;
+
 BoundedBuffer *TO_APP_BUFF[MAX_PID+1];
+BoundedBuffer *TO_NET_BUFF;
 
 /* definition[s] of function[s] required for your thread[s] */
 
 void blocking_send_packet(PacketDescriptor *pd){
+	if(!INITIALIZED){
+		printf("network driver not initialized.");
+		return;
+	}
 
+	blockingWriteBB(TO_NET_BUFF, (void *) pd);
 }
-int  nonblocking_send_packet(PacketDescriptor *pd){
+int nonblocking_send_packet(PacketDescriptor *pd){
+	if(!INITIALIZED){
+		printf("network driver not initialized.");
+		return 1;
+	}
 
+	return nonblockingWriteBB(TO_NET_BUFF, (void *) pd);
 }
 /* These calls hand in a PacketDescriptor for dispatching */
 /* The nonblocking call must return promptly, indicating whether or */
@@ -44,9 +56,19 @@ int  nonblocking_send_packet(PacketDescriptor *pd){
 /* Neither call should delay until the packet is actually sent      */
 
 void blocking_get_packet(PacketDescriptor **pd, PID pid){
+	if(!INITIALIZED){
+		printf("network driver not initialized.");
+		return;
+	}
+
 	*pd = (PacketDescriptor *) blockingReadBB(TO_APP_BUFF[(unsigned int) pid]);
 }
 int  nonblocking_get_packet(PacketDescriptor **pd, PID pid){
+	if(!INITIALIZED){
+		printf("network driver not initialized.");
+		return 1;
+	}
+
 	return nonblockingReadBB(TO_APP_BUFF[(unsigned int) pid], (void *) *pd);
 }
 /* These represent requests for packets by the application threads */
@@ -83,10 +105,17 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 	}
 
 /* create any buffers required by your thread[s] */
+
+	//create buffer for apps to put into
+	if((TO_NET_BUFF = createBB(MAX_PID)) == NULL){
+		printf("Failed to TO_NET_BUFF.");
+		return;
+	}
+
 	//create MAX_PID + 1 buffers, so that each app has a buffer to get from
 	int i;
 	for(i=0; i <= MAX_PID; i++){
-		if((TO_APP_BUFF[i] = createBB(NUM_PID)) == NULL){
+		if((TO_APP_BUFF[i] = createBB(APP_BB_SIZE)) == NULL){
 			//log error and return
 			printf("Failed to create TO_APP_BUFF for app %d\n", i);
 			return;
@@ -108,6 +137,7 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 
 /* return the FPDS to the code that called you */
 
+	INITIALIZED = 1;
 }
 
 
