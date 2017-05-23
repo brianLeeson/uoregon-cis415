@@ -3,21 +3,31 @@
  *
  *  Created on: May 11, 2017
  *      Author: brian
- *
+ *		ID: bel
+ *		Assignment: CIS 415 Project 2
+ *		This is my own work except that... Sam and I talked about the flow of data through the network drive and how that would work.
  */
-
-
-
-
 
 #include "packetdescriptor.h"
 #include "destination.h"
 #include "pid.h"
 #include "freepacketdescriptorstore.h"
+#include "freepacketdescriptorstore__full.h"
+#include "BoundedBuffer.h"
+#include "stdlib.h"
+#include "stdio.h"
+#include "packetdescriptorcreator.h"
 
 #include "networkdevice.h"
 
-/* These are the calls to be implemented by the students */
+#define TO_NET_SIZE 100
+#define TO_APP_SIZE 100
+
+/* any global variables required for use by your threads and your driver routines */
+int NUM_PID = 0;
+BoundedBuffer *TO_APP_BUFF[MAX_PID+1];
+
+/* definition[s] of function[s] required for your thread[s] */
 
 void blocking_send_packet(PacketDescriptor *pd){
 
@@ -34,10 +44,10 @@ int  nonblocking_send_packet(PacketDescriptor *pd){
 /* Neither call should delay until the packet is actually sent      */
 
 void blocking_get_packet(PacketDescriptor **pd, PID pid){
-
+	*pd = (PacketDescriptor *) blockingReadBB(TO_APP_BUFF[(unsigned int) pid]);
 }
 int  nonblocking_get_packet(PacketDescriptor **pd, PID pid){
-
+	return nonblockingReadBB(TO_APP_BUFF[(unsigned int) pid], (void *) *pd);
 }
 /* These represent requests for packets by the application threads */
 /* The nonblocking call must return promptly, with the result 1 if */
@@ -52,9 +62,8 @@ int  nonblocking_get_packet(PacketDescriptor **pd, PID pid){
 /* is waiting uncollected for the same PID. i.e. applications must */
 /* collect their packets reasonably promptly, or risk packet loss. */
 
-void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_length,
-							FreePacketDescriptorStore **fpds_ptr);
-/* Called before any other methods, to allow you to initialise */
+void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_length, FreePacketDescriptorStore **fpds_ptr){
+/* Called before any other methods, to allow you to initialize */
 /* data structures and start any internal threads.             */
 /* Arguments:                                                  */
 /*   nd: the NetworkDevice that you must drive,                */
@@ -63,3 +72,43 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 /*             which you have put the divided up memory        */
 /* Hint: just divide the memory up into pieces of the right size */
 /*       passing in pointers to each of them                     */
+
+/* create Free Packet Descriptor Store */
+	*fpds_ptr = create_fpds();
+
+/* load FPDS with packet descriptors constructed from mem_start/mem_length */
+	if((NUM_PID = create_free_packet_descriptors(*fpds_ptr, mem_start, mem_length)) == 0){
+		printf("Failed to create free packet descriptors. NUM_PID: %d\n", NUM_PID);
+		return;
+	}
+
+/* create any buffers required by your thread[s] */
+	//create MAX_PID + 1 buffers, so that each app has a buffer to get from
+	int i;
+	for(i=0; i <= MAX_PID; i++){
+		if((TO_APP_BUFF[i] = createBB(NUM_PID)) == NULL){
+			//log error and return
+			printf("Failed to create TO_APP_BUFF for app %d\n", i);
+			return;
+		}
+	}
+
+
+
+/* create any threads you require for your implementation */
+	//listening to app
+
+	//listening to driver
+
+	//sending to app
+
+	//sending to driver
+
+
+
+/* return the FPDS to the code that called you */
+
+}
+
+
+
