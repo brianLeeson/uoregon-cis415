@@ -6,7 +6,7 @@
  *		ID: bel
  *		Assignment: CIS 415 Project 2
  *		This is my own work except that... Sam and I talked about the flow of data through the network drive and how that would work.
- *		It was sam's idea to recycle the pd in get_from_network.
+ *		It was sam's idea to recycle the pd in get_from_network. We both talked out loud about segfaults on each other's code.
  */
 
 #include "packetdescriptor.h"
@@ -19,7 +19,6 @@
 #include "stdio.h"
 #include "packetdescriptorcreator.h"
 #include "pthread.h"
-
 #include "networkdevice.h"
 
 #define APP_BB_SIZE 2
