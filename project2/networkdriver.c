@@ -6,6 +6,7 @@
  *		ID: bel
  *		Assignment: CIS 415 Project 2
  *		This is my own work except that... Sam and I talked about the flow of data through the network drive and how that would work.
+ *		It was sam's idea to recycle the pd in get_from_network.
  */
 
 #include "packetdescriptor.h"
@@ -27,6 +28,7 @@
 /* any global variables required for use by your threads and your driver routines */
 int NUM_PID = 0;
 int INITIALIZED = 0;
+volatile int DONE = 0;
 
 NetworkDevice *ND;
 FreePacketDescriptorStore *FPDS;
@@ -34,12 +36,12 @@ FreePacketDescriptorStore *FPDS;
 BoundedBuffer *TO_APP_BUFF[MAX_PID+1];
 BoundedBuffer *TO_NET_BUFF;
 
-pthread_t *to_network;
-pthread_t *from_network;
+pthread_t to_network;
+pthread_t from_network;
 
 /* definition[s] of function[s] required for your thread[s] */
 void *put_on_network(UNUSED void *args){
-	while(1){
+	while(!DONE){
 		PacketDescriptor *pd = (PacketDescriptor *) blockingReadBB(TO_NET_BUFF);
 		int attempts = 3;
 
@@ -48,22 +50,28 @@ void *put_on_network(UNUSED void *args){
 
 		blocking_put_pd(FPDS, pd);
 	}
+	pthread_exit(NULL);
 }
 
 void *get_from_network(UNUSED void *args){
-	while(1){
+	int recycling = 0;
+	while(!DONE){
 		PacketDescriptor *pd;
 
 		//get from fpds and register packet
-		blocking_get_pd(FPDS, &pd);
+		if(!recycling){
+			blocking_get_pd(FPDS, &pd);
+		}
+		init_packet_descriptor(pd);
 		register_receiving_packetdescriptor(ND, pd);
 
 		//listen to network
 		await_incoming_packet(ND);
 
-		//put in TO_APP_BUFF. if full, drop packet.
-		nonblockingWriteBB(TO_APP_BUFF[packet_descriptor_get_pid(pd)], (void *) pd);
+		//put in TO_APP_BUFF. if full, drop packet. If we fail, recycle pd
+		recycling = !nonblockingWriteBB(TO_APP_BUFF[packet_descriptor_get_pid(pd)], (void *) pd);
 	}
+	pthread_exit(NULL);
 }
 
 void blocking_send_packet(PacketDescriptor *pd){
@@ -126,9 +134,13 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 /* Hint: just divide the memory up into pieces of the right size */
 /*       passing in pointers to each of them                     */
 
+
 	ND = nd;
 /* create Free Packet Descriptor Store */
-	*fpds_ptr = create_fpds();
+	if ((*fpds_ptr = create_fpds()) == NULL){
+		printf("Failed to create free packet descriptor store.");
+		goto clean;
+	}
 	FPDS = *fpds_ptr;
 
 /* load FPDS with packet descriptors constructed from mem_start/mem_length */
@@ -157,13 +169,13 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 
 /* create any threads you require for your implementation */
 	//putting on network
-	if(pthread_create(to_network, NULL, put_on_network, NULL) != 0){
+	if(pthread_create(&to_network, NULL, put_on_network, NULL) != 0){
 		printf("Failed to create to_network pthread");
 		goto clean;
 	}
 
 	//getting from network
-	if(pthread_create(from_network, NULL, get_from_network, NULL) != 0){
+	if(pthread_create(&from_network, NULL, get_from_network, NULL) != 0){
 		printf("Failed to create from_network pthread");
 		goto clean;
 	}
@@ -171,12 +183,34 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 /* return the FPDS to the code that called you */
 
 	INITIALIZED = 1;
-
 	return;
 
 	clean:
 		printf("cleaning up");
 
+		//clean threads
+		DONE = 1;
+
+		//clean TO_NET_BUFF
+		if (TO_NET_BUFF != NULL){
+			destroyBB(TO_NET_BUFF);
+		}
+
+		//clean TO_APP_BUFF
+		if (TO_APP_BUFF != NULL){
+			int i;
+			for(i=0; i <= MAX_PID; i++){
+				if(TO_APP_BUFF[i] != NULL){
+					destroyBB(TO_APP_BUFF[i]);
+				}
+			}
+		}
+
+		// clean FPDS
+		if(FPDS != NULL){
+			destroy_fpds(FPDS);
+			FPDS = NULL;
+		}
 }
 
 
