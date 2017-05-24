@@ -37,7 +37,7 @@ int send_packet(NetworkDevice *nd, PacketDescriptor *pd);
 
 void register_receiving_packetdescriptor(NetworkDevice *nd, PacketDescriptor *pd);
 /* tell the network device to use the indicated PacketDescriptor     */
-/* for next incoming data packet; once a descriptor is used it won't */
+/* for next incoming data packet; once a descriptor is used, it won't */
 /* be reused for a further incoming data packet; you must register   */
 /* another PacketDescriptor before the next packet arrives           */
 
