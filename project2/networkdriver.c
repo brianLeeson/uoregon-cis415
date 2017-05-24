@@ -17,34 +17,67 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "packetdescriptorcreator.h"
+#include "pthread.h"
 
 #include "networkdevice.h"
 
 #define APP_BB_SIZE 2
+#define UNUSED __attribute__((unused))
 
 /* any global variables required for use by your threads and your driver routines */
 int NUM_PID = 0;
 int INITIALIZED = 0;
 
+NetworkDevice *ND;
+FreePacketDescriptorStore *FPDS;
+
 BoundedBuffer *TO_APP_BUFF[MAX_PID+1];
 BoundedBuffer *TO_NET_BUFF;
 
+pthread_t *to_network;
+pthread_t *from_network;
+
 /* definition[s] of function[s] required for your thread[s] */
+void *put_on_network(UNUSED void *args){
+	while(1){
+		PacketDescriptor *pd = (PacketDescriptor *) blockingReadBB(TO_NET_BUFF);
+		int attempts = 3;
+
+		//attempt to send the pd at most attempts times
+		while((attempts--) && (send_packet(ND, pd) != 1)){}
+
+		blocking_put_pd(FPDS, pd);
+	}
+}
+
+void *get_from_network(UNUSED void *args){
+	while(1){
+		PacketDescriptor *pd;
+
+		//get from fpds and register packet
+		blocking_get_pd(FPDS, &pd);
+		register_receiving_packetdescriptor(ND, pd);
+
+		//listen to network
+		await_incoming_packet(ND);
+
+		//put in TO_APP_BUFF. if full, drop packet.
+		nonblockingWriteBB(TO_APP_BUFF[packet_descriptor_get_pid(pd)], (void *) pd);
+	}
+}
 
 void blocking_send_packet(PacketDescriptor *pd){
 	if(!INITIALIZED){
 		printf("network driver not initialized.");
 		return;
 	}
-
 	blockingWriteBB(TO_NET_BUFF, (void *) pd);
 }
 int nonblocking_send_packet(PacketDescriptor *pd){
 	if(!INITIALIZED){
 		printf("network driver not initialized.");
-		return 1;
+		return 0;
 	}
-
 	return nonblockingWriteBB(TO_NET_BUFF, (void *) pd);
 }
 /* These calls hand in a PacketDescriptor for dispatching */
@@ -60,16 +93,14 @@ void blocking_get_packet(PacketDescriptor **pd, PID pid){
 		printf("network driver not initialized.");
 		return;
 	}
-
 	*pd = (PacketDescriptor *) blockingReadBB(TO_APP_BUFF[(unsigned int) pid]);
 }
 int  nonblocking_get_packet(PacketDescriptor **pd, PID pid){
 	if(!INITIALIZED){
 		printf("network driver not initialized.");
-		return 1;
+		return 0;
 	}
-
-	return nonblockingReadBB(TO_APP_BUFF[(unsigned int) pid], (void *) *pd);
+	return nonblockingReadBB(TO_APP_BUFF[(unsigned int) pid], (void **) pd);
 }
 /* These represent requests for packets by the application threads */
 /* The nonblocking call must return promptly, with the result 1 if */
@@ -95,13 +126,15 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 /* Hint: just divide the memory up into pieces of the right size */
 /*       passing in pointers to each of them                     */
 
+	ND = nd;
 /* create Free Packet Descriptor Store */
 	*fpds_ptr = create_fpds();
+	FPDS = *fpds_ptr;
 
 /* load FPDS with packet descriptors constructed from mem_start/mem_length */
 	if((NUM_PID = create_free_packet_descriptors(*fpds_ptr, mem_start, mem_length)) == 0){
 		printf("Failed to create free packet descriptors. NUM_PID: %d\n", NUM_PID);
-		return;
+		goto clean;
 	}
 
 /* create any buffers required by your thread[s] */
@@ -109,7 +142,7 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 	//create buffer for apps to put into
 	if((TO_NET_BUFF = createBB(MAX_PID)) == NULL){
 		printf("Failed to TO_NET_BUFF.");
-		return;
+		goto clean;
 	}
 
 	//create MAX_PID + 1 buffers, so that each app has a buffer to get from
@@ -118,26 +151,32 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 		if((TO_APP_BUFF[i] = createBB(APP_BB_SIZE)) == NULL){
 			//log error and return
 			printf("Failed to create TO_APP_BUFF for app %d\n", i);
-			return;
+			goto clean;
 		}
 	}
 
-
-
 /* create any threads you require for your implementation */
-	//listening to app
+	//putting on network
+	if(pthread_create(to_network, NULL, put_on_network, NULL) != 0){
+		printf("Failed to create to_network pthread");
+		goto clean;
+	}
 
-	//listening to driver
-
-	//sending to app
-
-	//sending to driver
-
-
+	//getting from network
+	if(pthread_create(from_network, NULL, get_from_network, NULL) != 0){
+		printf("Failed to create from_network pthread");
+		goto clean;
+	}
 
 /* return the FPDS to the code that called you */
 
 	INITIALIZED = 1;
+
+	return;
+
+	clean:
+		printf("cleaning up");
+
 }
 
 
