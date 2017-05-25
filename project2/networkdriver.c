@@ -35,9 +35,11 @@ FreePacketDescriptorStore *FPDS;
 
 BoundedBuffer *TO_APP_BUFF[MAX_PID+1];
 BoundedBuffer *TO_NET_BUFF;
+BoundedBuffer *RETURN_BUFF;
 
 pthread_t to_network;
 pthread_t from_network;
+pthread_t return_to_fpds;
 
 /* definition[s] of function[s] required for your thread[s] */
 void *put_on_network(UNUSED void *args){
@@ -50,8 +52,20 @@ void *put_on_network(UNUSED void *args){
 		while((attempts--) && (send_packet(ND, pd) != 1)){}
 
 		if(!attempts){
-			printf("Failed to put packet on network after %D attempts\n", attempts);
+			printf("Failed to put packet on network after %d attempts\n", attempts);
 		}
+
+		//put pid into RETURN_BUFF
+		blockingWriteBB(RETURN_BUFF, (void *) pd);
+	}
+	pthread_exit(NULL);
+}
+
+void *put_into_fpds(UNUSED void *args){
+	PacketDescriptor *pd;
+	while(!DONE){
+		//read from RETURN_BUFF
+		pd = (PacketDescriptor *) blockingReadBB(RETURN_BUFF);
 
 		//return pd to fpds
 		blocking_put_pd(FPDS, pd);
@@ -170,6 +184,11 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 			goto clean;
 		}
 	}
+	int return_size = to_net_size;
+	if((RETURN_BUFF = createBB(return_size)) == NULL){
+		printf("Failed to TO_NET_BUFF.");
+		goto clean;
+	}
 
 	/* create any threads you require for your implementation */
 	//putting on network
@@ -184,6 +203,12 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 		goto clean;
 	}
 
+	//returning to store
+	if(pthread_create(&return_to_fpds, NULL, put_into_fpds, NULL) != 0){
+		printf("Failed to create from_network pthread");
+		goto clean;
+	}
+
 	// send and get functions wont work until everything is initialized and INITIALIZED is set.
 	INITIALIZED = 1;
 	return;
@@ -192,12 +217,20 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 		//something has gone wrong and we will clean up before returning.
 		printf("init_network_driver failed. Cleaning up");
 
-		//clean threads
+		//clean threads. wait for threads to die before cleaning buffers
 		DONE = 1;
+		pthread_join(to_network, NULL);
+		pthread_join(from_network, NULL);
+		pthread_join(return_to_fpds, NULL);
 
 		//clean TO_NET_BUFF
 		if (TO_NET_BUFF != NULL){
 			destroyBB(TO_NET_BUFF);
+		}
+
+		//clean RETURN_BUFF
+		if (RETURN_BUFF != NULL){
+			destroyBB(RETURN_BUFF);
 		}
 
 		//clean TO_APP_BUFF
