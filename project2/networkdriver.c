@@ -5,8 +5,9 @@
  *      Author: brian
  *		ID: bel
  *		Assignment: CIS 415 Project 2
- *		This is my own work except that... Sam and I talked about the flow of data through the network drive and how that would work.
- *		It was Sam's idea to recycle the pd in get_from_network. We both talked out loud about segfaults on each other's code.
+ *		This is my own work except that: Sam and I talked about the flow of data through the network driver and how that would work.
+ *		It was Sam's idea to recycle the pd in get_from_network. I gave him the idea to have while(!DONE) in the thread functions.
+ *		We both talked out loud about segfaults on each other's code.
  */
 
 #include "packetdescriptor.h"
@@ -48,6 +49,10 @@ void *put_on_network(UNUSED void *args){
 		int attempts = 3;
 		while((attempts--) && (send_packet(ND, pd) != 1)){}
 
+		if(!attempts){
+			printf("Failed to put packet on network after %D attempts\n", attempts);
+		}
+
 		//return pd to fpds
 		blocking_put_pd(FPDS, pd);
 	}
@@ -69,10 +74,11 @@ void *get_from_network(UNUSED void *args){
 		//listen to network
 		await_incoming_packet(ND);
 
-		//put in TO_APP_BUFF. if full or fail, drop packet and set recycle to pd
+		//put in TO_APP_BUFF. if full or fail, drop packet and set up to recycle the packet
 		recycling = !nonblockingWriteBB(TO_APP_BUFF[packet_descriptor_get_pid(pd)], (void *) pd);
 	}
-	blocking_put_pd(FPDS, pd);
+	//return recycled packet to the fpds
+	if(recycling){blocking_put_pd(FPDS, pd);}
 	pthread_exit(NULL);
 }
 
@@ -131,6 +137,7 @@ int  nonblocking_get_packet(PacketDescriptor **pd, PID pid){
 
 void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_length, FreePacketDescriptorStore **fpds_ptr){
 	ND = nd;
+
 	/* create Free Packet Descriptor Store */
 	if ((*fpds_ptr = create_fpds()) == NULL){
 		printf("Failed to create free packet descriptor store.");
@@ -183,7 +190,7 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 
 	clean:
 		//something has gone wrong and we will clean up before returning.
-		printf("cleaning up");
+		printf("init_network_driver failed. Cleaning up");
 
 		//clean threads
 		DONE = 1;
@@ -208,6 +215,7 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 			destroy_fpds(FPDS);
 			FPDS = NULL;
 		}
+		return;
 }
 
 
