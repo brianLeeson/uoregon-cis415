@@ -88,7 +88,6 @@ void *get_from_network(UNUSED void *args){
  * The nonblocking call must return promptly, indicating whether or
  * not the indicated packet has been accepted by your code
  * (it might not be if the internal buffer is full) 1=OK, 0=not OK
- *
  */
 void blocking_send_packet(PacketDescriptor *pd){
 	if(!INITIALIZED){
