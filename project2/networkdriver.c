@@ -23,6 +23,7 @@
 #include "networkdevice.h"
 
 #define APP_BB_SIZE 2
+#define TRY_TO_SEND 3
 #define UNUSED __attribute__((unused))
 
 /* any global variables required for use by your threads and your driver routines */
@@ -35,11 +36,9 @@ FreePacketDescriptorStore *FPDS;
 
 BoundedBuffer *TO_APP_BUFF[MAX_PID+1];
 BoundedBuffer *TO_NET_BUFF;
-BoundedBuffer *RETURN_BUFF;
 
 pthread_t to_network;
 pthread_t from_network;
-pthread_t return_to_fpds;
 
 /* definition[s] of function[s] required for your thread[s] */
 void *put_on_network(UNUSED void *args){
@@ -48,24 +47,12 @@ void *put_on_network(UNUSED void *args){
 		PacketDescriptor *pd = (PacketDescriptor *) blockingReadBB(TO_NET_BUFF);
 
 		//attempt to send the pd at most attempts times
-		int attempts = 3;
+		int attempts = TRY_TO_SEND;
 		while((attempts--) && (send_packet(ND, pd) != 1)){}
 
 		if(!attempts){
-			printf("Failed to put packet on network after %d attempts\n", attempts);
+			printf("Failed to put packet on network after %d attempts\n", TRY_TO_SEND);
 		}
-
-		//put pid into RETURN_BUFF
-		blockingWriteBB(RETURN_BUFF, (void *) pd);
-	}
-	pthread_exit(NULL);
-}
-
-void *put_into_fpds(UNUSED void *args){
-	PacketDescriptor *pd;
-	while(!DONE){
-		//read from RETURN_BUFF
-		pd = (PacketDescriptor *) blockingReadBB(RETURN_BUFF);
 
 		//return pd to fpds
 		blocking_put_pd(FPDS, pd);
@@ -166,9 +153,13 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 	}
 
 	/* create any buffers required by your thread[s] */
-	// size of the buffer can't be too big or all packets could live in it and starve other programs.
-	// size = # pds - the sum of the  space of the buffers that the apps pull from
-	int to_net_size = NUM_PD -((MAX_PID+1) * APP_BB_SIZE);
+	// size of the buffer should be strictly less than the number of pds
+	if(NUM_PD < 3){
+		printf("Failed to create enough free packet descriptors. NUM_PID: %d\n", NUM_PD);
+		goto clean;
+	}
+	int to_net_size = NUM_PD / 2;
+
 	//create buffer for apps to put into
 	if((TO_NET_BUFF = createBB(to_net_size)) == NULL){
 		printf("Failed to TO_NET_BUFF.");
@@ -184,11 +175,6 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 			goto clean;
 		}
 	}
-	int return_size = to_net_size;
-	if((RETURN_BUFF = createBB(return_size)) == NULL){
-		printf("Failed to TO_NET_BUFF.");
-		goto clean;
-	}
 
 	/* create any threads you require for your implementation */
 	//putting on network
@@ -199,12 +185,6 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 
 	//getting from network
 	if(pthread_create(&from_network, NULL, get_from_network, NULL) != 0){
-		printf("Failed to create from_network pthread");
-		goto clean;
-	}
-
-	//returning to store
-	if(pthread_create(&return_to_fpds, NULL, put_into_fpds, NULL) != 0){
 		printf("Failed to create from_network pthread");
 		goto clean;
 	}
@@ -221,16 +201,10 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 		DONE = 1;
 		pthread_join(to_network, NULL);
 		pthread_join(from_network, NULL);
-		pthread_join(return_to_fpds, NULL);
 
 		//clean TO_NET_BUFF
 		if (TO_NET_BUFF != NULL){
 			destroyBB(TO_NET_BUFF);
-		}
-
-		//clean RETURN_BUFF
-		if (RETURN_BUFF != NULL){
-			destroyBB(RETURN_BUFF);
 		}
 
 		//clean TO_APP_BUFF
@@ -250,6 +224,3 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 		}
 		return;
 }
-
-
-
