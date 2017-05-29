@@ -43,10 +43,10 @@ pthread_t from_network;
 /* definition[s] of function[s] required for your thread[s] */
 void *put_on_network(UNUSED void *args){
 	while(!DONE){
-		//get next pd to put on network
+		/*get next pd to put on network*/
 		PacketDescriptor *pd = (PacketDescriptor *) blockingReadBB(TO_NET_BUFF);
 
-		//attempt to send the pd at most attempts times
+		/*attempt to send the pd at most attempts times*/
 		int attempts = TRY_TO_SEND;
 		while((attempts--) && (send_packet(ND, pd) != 1)){}
 
@@ -54,7 +54,7 @@ void *put_on_network(UNUSED void *args){
 			printf("Failed to put packet on network after %d attempts\n", TRY_TO_SEND);
 		}
 
-		//return pd to fpds
+		/*return pd to fpds*/
 		blocking_put_pd(FPDS, pd);
 	}
 	pthread_exit(NULL);
@@ -65,20 +65,20 @@ void *get_from_network(UNUSED void *args){
 	PacketDescriptor *pd;
 
 	while(!DONE){
-		//get from fpds and register packet
+		/*get from fpds and register packet*/
 		if(!recycling){
 			blocking_get_pd(FPDS, &pd);
 		}
 		init_packet_descriptor(pd);
 		register_receiving_packetdescriptor(ND, pd);
 
-		//listen to network
+		/*listen to network*/
 		await_incoming_packet(ND);
 
-		//put in TO_APP_BUFF. if full or fail, drop packet and set up to recycle the packet
+		/*put in TO_APP_BUFF. if full or fail, drop packet and set up to recycle the packet*/
 		recycling = !nonblockingWriteBB(TO_APP_BUFF[packet_descriptor_get_pid(pd)], (void *) pd);
 	}
-	//return recycled packet to the fpds
+	/*return recycled packet to the fpds*/
 	if(recycling){blocking_put_pd(FPDS, pd);}
 	pthread_exit(NULL);
 }
@@ -103,6 +103,7 @@ int nonblocking_send_packet(PacketDescriptor *pd){
 	}
 	return nonblockingWriteBB(TO_NET_BUFF, (void *) pd);
 }
+
 
 /*
  * These represent requests for packets by the application threads
@@ -152,61 +153,61 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 	}
 
 	/* create any buffers required by your thread[s] */
-	// size of the buffer should be strictly less than the number of pds
+	/* size of the buffer should be strictly less than the number of pds*/
 	if(NUM_PD < 3){
 		printf("Failed to create enough free packet descriptors. NUM_PID: %d\n", NUM_PD);
 		goto clean;
 	}
 	int to_net_size = NUM_PD / 2;
 
-	//create buffer for apps to put into
+	/*create buffer for apps to put into*/
 	if((TO_NET_BUFF = createBB(to_net_size)) == NULL){
 		printf("Failed to TO_NET_BUFF.\n");
 		goto clean;
 	}
 
-	//create MAX_PID + 1 buffers, so that each app has a buffer to get from
+	/*create MAX_PID + 1 buffers, so that each app has a buffer to get from*/
 	int i;
 	for(i=0; i <= MAX_PID; i++){
 		if((TO_APP_BUFF[i] = createBB(APP_BB_SIZE)) == NULL){
-			//log error and return
+			/*log error and return*/
 			printf("Failed to create TO_APP_BUFF for app %d\n", i);
 			goto clean;
 		}
 	}
 
 	/* create any threads you require for your implementation */
-	//putting on network
+	/*putting on network*/
 	if(pthread_create(&to_network, NULL, put_on_network, NULL) != 0){
 		printf("Failed to create to_network pthread\n");
 		goto clean;
 	}
 
-	//getting from network
+	/*getting from network*/
 	if(pthread_create(&from_network, NULL, get_from_network, NULL) != 0){
 		printf("Failed to create from_network pthread\n");
 		goto clean;
 	}
 
-	// send and get functions wont work until everything is initialized and INITIALIZED is set.
+	/* send and get functions wont work until everything is initialized and INITIALIZED is set.*/
 	INITIALIZED = 1;
 	return;
 
 	clean:
-		//something has gone wrong and we will clean up before returning.
+		/*something has gone wrong and we will clean up before returning.*/
 		printf("init_network_driver failed. Cleaning up\n");
 
-		//clean threads. wait for threads to die before cleaning buffers
+		/*clean threads. wait for threads to die before cleaning buffers*/
 		DONE = 1;
 		pthread_join(to_network, NULL);
 		pthread_join(from_network, NULL);
 
-		//clean TO_NET_BUFF
+		/*clean TO_NET_BUFF*/
 		if (TO_NET_BUFF != NULL){
 			destroyBB(TO_NET_BUFF);
 		}
 
-		//clean TO_APP_BUFF
+		/*clean TO_APP_BUFF*/
 		if (TO_APP_BUFF != NULL){
 			int i;
 			for(i=0; i <= MAX_PID; i++){
@@ -216,7 +217,7 @@ void init_network_driver(NetworkDevice *nd, void *mem_start, unsigned long mem_l
 			}
 		}
 
-		// clean FPDS
+		/* clean FPDS*/
 		if(FPDS != NULL){
 			destroy_fpds(FPDS);
 			FPDS = NULL;
