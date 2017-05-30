@@ -1,8 +1,9 @@
 Brian Leeson
 
 The state of my solution is strong. Compiles and runs without errors. I do not get any of the error diagnostics, 
-so no packets are missed coming from the network for the standard 2 minute run. Applications that call nonblocking 
-put sometimes fail as the buffer is full. However this makes sense as the applications put packets into the buffer 
-faster than they can be sent to the network and the buffer must be bounded, so it should follow that some 
-nonblocking puts will sometimes fail. I have tested cleanup after a failure in init and the resources are cleaned, 
-but the calling code segfaults. I think this is acceptable.
+so no packets are missed coming from the network for the standard 2 minute run. It has also been tested without 
+errors on 10 minute run as well. Applications that call nonblocking put sometimes fail as the buffer is full. 
+However this makes sense as the applications put packets into the buffer faster than they can be sent to the 
+network and the buffer must be bounded, so it should follow that some nonblocking puts will sometimes fail. I 
+have tested cleanup after a failure in init and the resources are cleaned, but the calling code segfaults. I 
+think this is acceptable.
