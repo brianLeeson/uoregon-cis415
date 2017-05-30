@@ -1,4 +1,4 @@
-CFLAGS=-W -Wall -g
+CFLAGS= -std=c89 -W -Wall -g
 OBJECTS=BoundedBuffer.o diagnostics.o fakeapplications.o \
         freepacketdescriptorstore.o generic_queue.o \
         networkdevice.o networkdriver.o packetdescriptor.o \
