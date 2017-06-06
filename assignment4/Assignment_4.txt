@@ -1,3 +1,7 @@
+Assignment #4
+CIS 415
+Brian Leeson
+
 1. OSC 10.11
 a. First Come First Serve:	13011 = 81+857+1084+504+2256+1074+1262+1167+3442+1284
 b. Shortest Seek Time First:	7586 = 81+227+504+881+1284+3347+95+311+668+188
@@ -16,6 +20,8 @@ b. What is the maximum size of a file (in bytes) that can be stored in this file
 
 Direct Blocks
 8 block pointers * 1kB block = 8 kB
+2^3 * 2^10
+2^13 bytes
 
 Single Indirect
 1 block pointer points to a block with 2^10 / 4 block pointers
@@ -24,11 +30,44 @@ Single Indirect
 
 Double Indirect
 1 block pointer points to a block with 2^8 block pointers, each pointing to a single indirect
-2^8 single indirect pointers * size of SIG 2^18 = 
+2^8 single indirect pointers * space SIP can point to  2^18 = 
 2^26 bytes
 
 Triple Indirect
 1 block pointer points to a block with 2^8 block pointers, each pointing to a double indirect, each pointing to a single indirect
-2^8 double indirect pointers * size of DIP 2^26 =
+2^8 double indirect pointers * space DIP can point to 2^26 =
 2^34 bytes
+
+2^34 + 2^26 + 2^18 + 2^13  = 
+17247248384 bytes
+
+3. The processor for which you are designing your application has L1i and L1d virtual caches.
+a. What type of data does each cache hold?
+L1d is the level 1 data cache, L1i the level 1 instruction cache. -Direct quote from cache handout
+
+b. Describe in detail the activities of the cache + memory system when executing the instruction: 
+LOAD virtual address, register
+
+Look to see if the data at the virtual address is in the L1d cache, if it is not, go to the L2 chache, L3 chache, 
+Main Memory, and then Disk until you find it. Once the data is found, load the block that contains that data into the L1d cache.
+Then the the data is loaded from the L1d cache into the register.
+
+c. Assume that the above instruction is executed many times in a loop, and that the
+instruction itself is in the cache. Also assume that memory access costs τ µs, and
+cache access costs τ/15 µs. What cache hit rate ρ for “virtual address” is required for
+the memory system to run 5 times faster than with no caching at all? Show your work.
+
+without cache time: τ µs
+
+5 * (time if a hit + time if a miss) = memory access with no cache 
+5 * [(t/15) * p + (1-p) * t] = t
+[(1/3) * p + 5* (1-p)] = 1
+
+p = 6/7
+
+d.
+i.
+.95 * 2ns + (1-.95) * 100ns = 6.9ns
+ii.
+.95 * 2ns + (1-.95)[100ns * .99999 + .0001 * 10^7 ns] = 56.89995ns
 
