@@ -3,5 +3,32 @@ a. First Come First Serve:	13011 = 81+857+1084+504+2256+1074+1262+1167+3442+1284
 b. Shortest Seek Time First:	7586 = 81+227+504+881+1284+3347+95+311+668+188
 c. SCAN: 			7492 = 2*(4999-2150) + 2150 - 356
 d. LOOK				7424 = 2*(4965 - 2150) +2150 - 356
-e. C-SCAN
-f. C-LOOK
+e. C-SCAN			9917 = 4999 - 2150 + 4999 + 2069
+f. C-LOOK			9137 = 4965 - 2150 + 4965 - 356 + 2069 - 356
+
+2.
+a. What is the maximum size of a disk (in bytes) for which one can use this file system? 
+4 bytes = 32 bits, is 2^32 unique block addresses.
+2^32 blocks * 1 kB/blocks = 2^32 kB = 2^32 * 2^10 bytes
+2^42 bytes
+
+b. What is the maximum size of a file (in bytes) that can be stored in this file system?
+
+Direct Blocks
+8 block pointers * 1kB block = 8 kB
+
+Single Indirect
+1 block pointer points to a block with 2^10 / 4 block pointers
+(2^10 / 4) blocks * 1 KB/block = (2^10 / 4) kB = (2^10 / 4) * 2^10 bytes = 
+2^18 bytes
+
+Double Indirect
+1 block pointer points to a block with 2^8 block pointers, each pointing to a single indirect
+2^8 single indirect pointers * size of SIG 2^18 = 
+2^26 bytes
+
+Triple Indirect
+1 block pointer points to a block with 2^8 block pointers, each pointing to a double indirect, each pointing to a single indirect
+2^8 double indirect pointers * size of DIP 2^26 =
+2^34 bytes
+
