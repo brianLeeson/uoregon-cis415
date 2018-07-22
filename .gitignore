@@ -13,4 +13,6 @@ uspsv2
 uspsv3
 uspsv4
 bel*
-
+networkdriver.o
+.idea
+mydemo
